@@ -1,0 +1,18 @@
+.homeContent {
+    padding: 20px;
+    margin-top: 20px;
+    text-align: center;
+    font-size: 24px;
+    color: var(--primary);
+  }
+  
+  .homeContent h1 {
+    font-size: 36px;
+    font-weight: 700;
+  }
+  
+  .homeContent p {
+    font-size: 18px;
+    margin-top: 10px;
+  }
+  
