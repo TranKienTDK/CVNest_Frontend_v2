@@ -23,6 +23,10 @@ const companyAPI = {
       },
     });
   },
+  // API chi tiết 1 công ty
+  getDetailCompany: (id) => {
+    return API.get(`/company/${id}`);
+  }
 };
 
 export default companyAPI;
