@@ -16,9 +16,11 @@
 }
 
 .container {
-  padding: 400px 40px 40px;
+  padding: 80px 40px 40px;
   background-color: #f9fafc;
   min-height: 100vh;
+  z-index: 1;
+  position: relative;
 }
 
 .introSection {
@@ -49,8 +51,7 @@
 
 .searchSection {
   text-align: center;
-  margin-bottom: 40px; /* Add more space below the search section */
-  z-index: 900; /* Ensure the search section stays on top */
+  margin-bottom: 40px;
   position: relative;
 }
 

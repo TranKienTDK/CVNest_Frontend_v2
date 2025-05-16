@@ -9,12 +9,18 @@ import {
   FileEdit,
   GraduationCap,
   Hammer,
+  LogOut,
   MapPin,
   Menu,
   Phone,
   Settings,
   User,
+  FileText,
+  Bell,
+  UserCog,
+  ClipboardList,
   X,
+  Check,
 } from "lucide-react"
 
 import {
@@ -28,10 +34,24 @@ import {
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import logo from "../../assets/CVNest_logo.jpg"
+import { ROUTES } from "@/routes/routes"
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { isAuthenticated, getUserData, getUserRole, clearAuthData } from "@/helper/storage"
+import { toast } from "react-toastify"
+import auth from "@/api/auth"
+import notification from "@/api/notification"
+import websocketService from "@/api/websocket"
+import { formatDistanceToNow } from "date-fns"
+import viLocale from "date-fns/locale/vi"
 
-// Category item component for Việc làm IT dropdown
 const CategoryItem = ({ icon: Icon, title, onMouseOver }) => (
   <Link to="#" className="flex items-center gap-2 rounded-md p-2 hover:bg-muted" onMouseOver={onMouseOver}>
     <Icon className="h-4 w-4" />
@@ -50,19 +70,136 @@ export default function Header({ className }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState("capbac")
   const [showCongCuDropdown, setShowCongCuDropdown] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notificationSubscription, setNotificationSubscription] = useState(null)
+  
   const congCuRef = useRef(null)
+  const notificationRef = useRef(null)
+  const navigate = useNavigate()
+  
+  const authenticated = isAuthenticated()
+  const userData = getUserData()
+  const userRole = getUserRole()
+  const isHR = userRole === "HR"
 
-  // Handle click outside to close the dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (congCuRef.current && !congCuRef.current.contains(event.target)) {
         setShowCongCuDropdown(false)
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false)
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (authenticated && userData?.id && isHR) {
+      websocketService.connect();
+      
+      const subscription = websocketService.subscribeToUserNotifications(
+        userData.id,
+        handleNewNotification
+      );
+      
+      setNotificationSubscription(subscription);
+      
+      fetchNotifications();
+    }
+    
+    return () => {
+      if (notificationSubscription) {
+        const topic = `/user/${userData?.id}/topic/notifications`;
+        websocketService.unsubscribeFromTopic(topic);
+      }
+    };
+  }, [authenticated, userData?.id, isHR])
+
+  const handleNewNotification = (notification) => {
+    console.log('New notification received:', notification);
+    
+    setNotifications(prev => [notification, ...prev]);
+    
+    setUnreadCount(prev => prev + 1);
+    
+    toast.info(notification.content, {
+      position: "top-right",
+      autoClose: 5000,
+    });
+  }
+
+  const fetchNotifications = async () => {
+    if (!userData?.id) return
+    
+    setIsLoadingNotifications(true)
+    try {
+      const response = await notification.getNotifications(userData.id)
+      console.log("Fetched notifications:", response.data)
+      if (response.data?.data) {
+        const notificationData = response.data.data
+        setNotifications(notificationData)
+        
+        const unreadNotifications = notificationData.filter(
+          notif => notif.status === "UNREAD"
+        )
+        setUnreadCount(unreadNotifications.length)
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error)
+    } finally {
+      setIsLoadingNotifications(false)
+    }
+  }
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await notification.markAsRead(notificationId)
+      
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => 
+          notif.id === notificationId 
+            ? { ...notif, status: "READ" } 
+            : notif
+        )
+      )
+      
+      setUnreadCount(prev => Math.max(0, prev - 1))
+      
+    } catch (error) {
+      console.error("Error marking notification as read:", error)
+    }
+  }
+
+  const handleNotificationClick = (notif) => {
+    if (notif.status === "UNREAD") {
+      handleMarkAsRead(notif.id)
+    }
+    
+    if (notif.type === "JOB_APPLICATION") {
+      navigate(`/hr/applications/${notif.entityId}`)
+    }
+    
+    setShowNotifications(false)
+  }
+
+  const formatNotificationTime = (timeString) => {
+    try {
+      const date = new Date(timeString)
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: viLocale
+      })
+    } catch (error) {
+      console.error("Error formatting notification time:", error)
+      return "unknown time"
+    }
+  }
 
   // Data for categories and their subitems
   const categories = {
@@ -88,12 +225,79 @@ export default function Header({ className }) {
     },
   }
 
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      websocketService.disconnect();
+      
+      await auth.logout()
+      clearAuthData()
+      toast.success("Đăng xuất thành công!", {
+        position: "top-right",
+        autoClose: 2000,
+      })
+      navigate("/")
+    } catch (error) {
+      console.error("Logout error:", error)
+      websocketService.disconnect();
+      clearAuthData()
+      navigate("/")
+    }
+  }
+
+  // HR menu items
+  const hrMenuItems = [
+    { icon: UserCog, title: "Quản lý thông tin cá nhân", link: "/profile" },
+    { icon: ClipboardList, title: "Quản lý tin tuyển dụng", link: "/hr/jobs" },
+    { icon: FileText, title: "Quản lý CV ứng tuyển", link: ROUTES.HR_APPLICATIONS },
+  ]
+
+  // User menu items
+  const userMenuItems = [
+    { icon: UserCog, title: "Quản lý thông tin cá nhân", link: "/profile" },
+    { icon: FileText, title: "Quản lý CV", link: ROUTES.CVMANAGEMENT },
+    { icon: ClipboardList, title: "Quản lý CV ứng tuyển", link: ROUTES.APPLICATIONS },
+  ]
+
+  const menuItems = userRole === "HR" ? hrMenuItems : userMenuItems
+
+  const renderNotificationItem = (notif) => {
+    return (
+      <div 
+        key={notif.id}
+        onClick={() => handleNotificationClick(notif)}
+        className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors flex gap-3 ${
+          notif.status === "UNREAD" ? "bg-blue-50" : ""
+        }`}
+      >
+        <div className="flex-shrink-0">
+          {/* You can use different icons based on notification type */}
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+            <FileText className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="flex-grow">
+          <div className="text-sm font-medium">{notif.title}</div>
+          <p className="text-xs text-gray-600 line-clamp-2">{notif.content}</p>
+          <div className="text-xs text-gray-500 mt-1">{formatNotificationTime(notif.createdAt)}</div>
+        </div>
+        {notif.status === "UNREAD" && (
+          <div className="flex-shrink-0 self-center">
+            <div className="w-2 h-2 rounded-full bg-primary"></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div className={`${className} border-b fixed top-0 left-0 w-full bg-white z-50`}>
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className={`${className} border-b fixed top-0 left-0 w-full bg-white z-50`}>
+      <div className="container mx-auto flex h-[var(--header-height)] items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-2 font-bold text-xl">
-          <img src={logo || "/placeholder.svg"} className="h-12 w-12" alt="CVNest" />
+          <Link to="/">
+            <img src={logo || "/placeholder.svg"} className="h-12 w-12" alt="CVNest" />
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
@@ -134,14 +338,14 @@ export default function Header({ className }) {
 
               {/* Công ty IT */}
               <NavigationMenuItem>
-                <Link to="#" className={navigationMenuTriggerStyle()}>
+                <Link to={ROUTES.COMPANIES} className={navigationMenuTriggerStyle()}>
                   <Building2 className="mr-2 h-4 w-4" />
                   Công ty IT
                 </Link>
               </NavigationMenuItem>
 
               {/* Custom Công cụ dropdown */}
-              <div
+              {!isHR && <div
                 ref={congCuRef}
                 className="relative"
                 onMouseEnter={() => setShowCongCuDropdown(true)}
@@ -161,7 +365,7 @@ export default function Header({ className }) {
 
                 {showCongCuDropdown && (
                   <div className="absolute left-0 top-full z-10 mt-1 w-[200px] rounded-md border bg-popover p-1 shadow-md">
-                    <Link to="#" className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                    <Link to={ROUTES.CREATENAMECV} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
                       <FileEdit className="h-4 w-4" />
                       <div className="text-sm font-medium">Tạo CV</div>
                     </Link>
@@ -175,7 +379,16 @@ export default function Header({ className }) {
                     </Link>
                   </div>
                 )}
-              </div>
+              </div> }
+              
+              {authenticated && !isHR && (
+                <NavigationMenuItem>
+                  <Link to={ROUTES.CVMANAGEMENT} className={navigationMenuTriggerStyle()}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Danh sách CV
+                  </Link>
+                </NavigationMenuItem>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
@@ -186,13 +399,119 @@ export default function Header({ className }) {
             <Phone className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">0123 456 789</span>
           </div>
-          <Button variant="outline" size="sm" className="text-primaryRed border-primaryRed">
-            Nhà tuyển dụng
-          </Button>
-          <Button size="sm" className="bg-primaryRed font-bold ">
-            <User className="mr-2 h-4 w-4 " />
-            Đăng nhập
-          </Button>
+
+          {authenticated ? (
+            <div className="flex items-center gap-3">
+              {/* Notification button with dropdown - Only for HR users */}
+              {isHR && (
+                <div className="relative" ref={notificationRef}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="rounded-full"
+                    onClick={() => {
+                      setShowNotifications(!showNotifications);
+                    }}
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </Button>
+                  
+                  {/* Notifications dropdown */}
+                  {showNotifications && (
+                    <div className="absolute right-0 top-full mt-1 w-80 rounded-md border bg-white shadow-lg z-50 overflow-hidden">
+                      <div className="p-3 border-b flex justify-between items-center">
+                        <h3 className="font-medium">Thông báo</h3>
+                        {unreadCount > 0 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs flex items-center gap-1 h-auto py-1 px-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              notifications
+                                .filter(n => n.status === "UNREAD")
+                                .forEach(n => handleMarkAsRead(n.id));
+                            }}
+                          >
+                            <Check className="h-3 w-3" /> 
+                            <span>Đánh dấu đã đọc tất cả</span>
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="max-h-96 overflow-y-auto">
+                        {isLoadingNotifications ? (
+                          <div className="p-4 text-center">Đang tải thông báo...</div>
+                        ) : notifications.length > 0 ? (
+                          notifications.map(renderNotificationItem)
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">Không có thông báo</div>
+                        )}
+                      </div>
+                      
+                      <div className="p-2 border-t text-center">
+                        <Button variant="ghost" size="sm" className="w-full text-primary text-sm" onClick={() => navigate("/notifications")}>
+                          Xem tất cả thông báo
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* User avatar and dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 rounded-full">
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center overflow-hidden">
+                      {userData?.username?.charAt(0) || <User className="h-4 w-4" />}
+                    </div>
+                    <span className="hidden sm:block max-w-[150px] truncate">{userData?.username || "User"}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium">{userData?.username || "User"}</p>
+                    <p className="text-xs text-muted-foreground">{userData?.email || ""}</p>
+                    <p className="text-xs font-semibold text-primary">{userRole || ""}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Dynamic menu items based on role */}
+                  {menuItems.map((item, index) => (
+                    <DropdownMenuItem key={index} asChild>
+                      <Link to={item.link} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                  
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Đăng xuất</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" className="text-primaryRed border-primaryRed">
+                Nhà tuyển dụng
+              </Button>
+              <Button size="sm" className="bg-primaryRed font-bold" onClick={() => navigate("/login")}>
+                <User className="mr-2 h-4 w-4" />
+                Đăng nhập
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile menu */}
@@ -215,6 +534,76 @@ export default function Header({ className }) {
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
+
+                {/* Mobile user info (if authenticated) */}
+                {authenticated && (
+                  <div className="flex items-center gap-3 p-2 border-b pb-4">
+                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                      {userData?.username?.charAt(0) || <User className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <p className="font-medium">{userData?.username || "User"}</p>
+                      <p className="text-xs text-muted-foreground">{userData?.email}</p>
+                      <p className="text-xs font-medium text-primary">{userRole}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Notifications for mobile - only for HR */}
+                {authenticated && isHR && (
+                  <Collapsible className="w-full border-b pb-2">
+                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 hover:bg-muted">
+                      <div className="flex items-center gap-2">
+                        <Bell className="h-4 w-4" />
+                        <span>Thông báo</span>
+                        {unreadCount > 0 && (
+                          <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-1 mt-2">
+                      {isLoadingNotifications ? (
+                        <div className="p-2 text-center text-sm">Đang tải...</div>
+                      ) : notifications.length > 0 ? (
+                        <div className="max-h-64 overflow-y-auto">
+                          {notifications.slice(0, 5).map(notif => (
+                            <div 
+                              key={notif.id} 
+                              className={`p-2 text-sm border-b last:border-b-0 ${
+                                notif.status === "UNREAD" ? "bg-blue-50" : ""
+                              }`}
+                              onClick={() => handleNotificationClick(notif)}
+                            >
+                              <div className="font-medium">{notif.title}</div>
+                              <p className="text-xs text-gray-600">{notif.content}</p>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {formatNotificationTime(notif.createdAt)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-2 text-center text-sm text-gray-500">
+                          Không có thông báo
+                        </div>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full text-primary text-sm"
+                        onClick={() => {
+                          navigate("/notifications");
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        Xem tất cả
+                      </Button>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
 
                 <div className="flex flex-col space-y-1">
                   {/* Việc làm IT */}
@@ -249,13 +638,13 @@ export default function Header({ className }) {
                     </CollapsibleContent>
                   </Collapsible>
 
-                  <Link to="#" className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                  <Link to={ROUTES.COMPANIES} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
                     <Building2 className="h-4 w-4" />
                     <span className="hover:text-primaryRed">Công ty IT</span>
                   </Link>
 
                   {/* Công cụ header with collapsible */}
-                  <Collapsible className="w-full">
+                  {!isHR && <Collapsible className="w-full">
                     <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 hover:bg-muted">
                       <div className="flex items-center gap-2">
                         <Settings className="h-4 w-4" />
@@ -264,7 +653,7 @@ export default function Header({ className }) {
                       <ChevronDown className="h-4 w-4" />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="ml-6 space-y-1">
-                      <Link to="#" className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                      <Link to={ROUTES.CREATENAMECV} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
                         <FileEdit className="h-4 w-4" />
                         <span>Tạo CV</span>
                       </Link>
@@ -277,28 +666,61 @@ export default function Header({ className }) {
                         <span>Trắc nghiệm</span>
                       </Link>
                     </CollapsibleContent>
-                  </Collapsible>
+                  </Collapsible> }
+
+                  {authenticated && !isHR &&(
+                    <Link to={ROUTES.CVMANAGEMENT} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                      <FileText className="h-4 w-4" />
+                      <span>Danh sách CV</span>
+                    </Link>
+                  )}
+
+                  {/* User-specific menu items in mobile view */}
+                  {authenticated && (
+                    <>
+                      {menuItems.map((item, index) => (
+                        <Link
+                          key={index}
+                          to={item.link}
+                          className="flex items-center gap-2 rounded-md p-2 hover:bg-muted"
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      ))}
+                      <Button 
+                        variant="ghost"
+                        className="flex w-full items-center justify-start rounded-md p-2 text-red-500 hover:bg-muted"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Đăng xuất</span>
+                      </Button>
+                    </>
+                  )}
                 </div>
 
-                <div className="space-y-2 pt-4 border-t">
-                  <div className="flex items-center gap-2 p-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">0123 456 789</span>
+                {!authenticated && (
+                  <div className="space-y-2 pt-4 border-t">
+                    <div className="flex items-center gap-2 p-2">
+                      <Phone className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">0123 456 789</span>
+                    </div>
+                    <Button variant="outline" className="w-full justify-start">
+                      Nhà tuyển dụng
+                    </Button>
+                    <Button className="w-full justify-start" onClick={() => navigate("/login")}>
+                      <User className="mr-2 h-4 w-4" />
+                      Đăng nhập
+                    </Button>
                   </div>
-                  <Button variant="outline" className="w-full justify-start">
-                    Nhà tuyển dụng
-                  </Button>
-                  <Button className="w-full justify-start">
-                    <User className="mr-2 h-4 w-4" />
-                    Đăng nhập
-                  </Button>
-                </div>
+                )}
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </div>
-    </div>
+    </header>
   )
 }
 

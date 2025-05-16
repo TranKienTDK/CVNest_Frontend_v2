@@ -23,67 +23,70 @@ const CompanyPage = () => {
   const [address, setAddress] = useState(undefined);
   const [industry, setIndustry] = useState(undefined);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [size] = useState(9);
-  const [isSearching, setIsSearching] = useState(false);
+  // const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isSearching) {
-      const fetchCompanies = async () => {
-        try {
-          const response = await companyAPI.getAllCompanies(page - 1, size);
-          setCompanies(response.data.data.content);
-          setTotalPages(response.data.data.page.totalPages);
-          setTotalElements(response.data.data.page.totalElements);
-        } catch (error) {
-          console.error("Error fetching companies:", error);
-        }
-      };
+    const fetchCompanies = async () => {
+      try {
+        const response = await companyAPI.getAllCompanies(0, size);
+        setCompanies(response.data.data.content);
+        setTotalElements(response.data.data.page.totalElements);
+      } catch (error) {
+        console.error("Error fetching companies:", error);
+      }
+    };
+    fetchCompanies();
+  }, [size]);
 
-      fetchCompanies();
+  const searchCompanies = async () => {
+    try {
+      const response = await companyAPI.searchCompanies(
+        search,
+        address,
+        industry,
+        page - 1,
+        size
+      );
+      setCompanies(response.data.data.content);
+      // setTotalPages(response.data.data.page.totalPages);
+      setTotalElements(response.data.data.page.totalElements);
+    } catch (error) {
+      console.error("Error searching companies:", error);
     }
-  }, [page, size, isSearching]);
-
-  useEffect(() => {
-    if (isSearching) {
-      const searchCompanies = async () => {
-        try {
-          const response = await companyAPI.searchCompanies(
-            search,
-            address,
-            industry,
-            page - 1,
-            size
-          );
-          setCompanies(response.data.data.content);
-          setTotalPages(response.data.data.page.totalPages);
-          setTotalElements(response.data.data.page.totalElements);
-        } catch (error) {
-          console.error("Error searching companies:", error);
-        }
-      };
-
-      searchCompanies();
-    }
-  }, [search, address, industry, page, size, isSearching]);
+  };
 
   const handleCompanyClick = (id) => {
     navigate(`/companies/${id}`);
   };
 
-  const handleSearch = () => {
-    setIsSearching(true);
+  const handleSearch = async () => {
+    try {
+      const response = await companyAPI.searchCompanies(
+        search,
+        address,
+        industry,
+        page - 1,
+        size
+      );
+      setCompanies(response.data.data.content);
+      // setTotalPages(response.data.data.page.totalPages);
+      setTotalElements(response.data.data.page.totalElements);
+    } catch (error) {
+      console.error("Error searching companies:", error);
+    }
     setPage(1);
   };
 
   const handleClearSearch = () => {
     setSearch("");
-    setAddress(undefined);
-    setIndustry(undefined);
-    setIsSearching(false);
+    setAddress(null);
+    setIndustry(null);
     setPage(1);
+    searchCompanies();
   };
 
   return (
@@ -117,9 +120,15 @@ const CompanyPage = () => {
                 <SelectValue placeholder="Chọn địa chỉ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem className={styles.selectItem} value="Hà Nội">Hà Nội</SelectItem>
-                <SelectItem className={styles.selectItem} value="Hồ Chí Minh">TP HCM</SelectItem>
-                <SelectItem className={styles.selectItem} value="Đà Nẵng">Đà Nẵng</SelectItem>
+                <SelectItem className={styles.selectItem} value="Hà Nội">
+                  Hà Nội
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Hồ Chí Minh">
+                  TP HCM
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Đà Nẵng">
+                  Đà Nẵng
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -128,19 +137,51 @@ const CompanyPage = () => {
                 <SelectValue placeholder="Chọn lĩnh vực" />
               </SelectTrigger>
               <SelectContent className={styles.selectContent}>
-                <SelectItem className={styles.selectItem} value="Phần mềm">Phần mềm</SelectItem>
-                <SelectItem className={styles.selectItem} value="Software">Software</SelectItem>
-                <SelectItem className={styles.selectItem} value="Ngân hàng">Ngân hàng</SelectItem>
-                <SelectItem className={styles.selectItem} value="Viễn thông">Viễn thông</SelectItem>
-                <SelectItem className={styles.selectItem} value="Edtech">Edtech</SelectItem>
-                <SelectItem className={styles.selectItem} value="Bất động sản">Bất động sản</SelectItem>
-                <SelectItem className={styles.selectItem} value="Fintech">Fintech</SelectItem>
-                <SelectItem className={styles.selectItem} value="Giáo dục">Giáo dục</SelectItem>
-                <SelectItem className={styles.selectItem} value="Thương mại điện tử">Thương mại điện tử</SelectItem>
-                <SelectItem className={styles.selectItem} value="Gia công phần mềm">Gia công phần mềm</SelectItem>
-                <SelectItem className={styles.selectItem} value="Kinh doanh">Kinh doanh</SelectItem>
-                <SelectItem className={styles.selectItem} value="Bảo hiểm">Bảo hiểm</SelectItem>
-                <SelectItem className={styles.selectItem} value="Game">Game</SelectItem>
+                <SelectItem className={styles.selectItem} value="Phần mềm">
+                  Phần mềm
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Software">
+                  Software
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Ngân hàng">
+                  Ngân hàng
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Viễn thông">
+                  Viễn thông
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Edtech">
+                  Edtech
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Bất động sản">
+                  Bất động sản
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Fintech">
+                  Fintech
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Giáo dục">
+                  Giáo dục
+                </SelectItem>
+                <SelectItem
+                  className={styles.selectItem}
+                  value="Thương mại điện tử"
+                >
+                  Thương mại điện tử
+                </SelectItem>
+                <SelectItem
+                  className={styles.selectItem}
+                  value="Gia công phần mềm"
+                >
+                  Gia công phần mềm
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Kinh doanh">
+                  Kinh doanh
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Bảo hiểm">
+                  Bảo hiểm
+                </SelectItem>
+                <SelectItem className={styles.selectItem} value="Game">
+                  Game
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -168,11 +209,11 @@ const CompanyPage = () => {
         <Row gutter={[16, 16]}>
           {companies.map((company) => (
             <Col key={company.id} xs={24} sm={12} md={8}>
-              <Card 
-              hoverable 
-              className={styles.companyCard}
-              onClick={() => handleCompanyClick(company.id)}
-              style={{ cursor: "pointer" }}
+              <Card
+                hoverable
+                className={styles.companyCard}
+                onClick={() => handleCompanyClick(company.id)}
+                style={{ cursor: "pointer" }}
               >
                 <div className={styles.cardContent}>
                   <img
@@ -197,7 +238,10 @@ const CompanyPage = () => {
             current={page}
             total={totalElements}
             pageSize={size}
-            onChange={(page) => setPage(page)}
+            onChange={(page) => {
+              setPage(page);
+              searchCompanies();
+            }}
             showSizeChanger={false}
             showQuickJumper
           />

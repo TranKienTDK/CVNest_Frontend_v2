@@ -10,6 +10,10 @@ const jobAPI = {
             },
         });
     },
+    // API lấy danh sách việc làm theo công ty
+    getJobsByCompany: (companyId) => {
+        return API.get(`/job/${companyId}/jobs`);
+    },
     // API tìm kiếm việc làm
     searchJobs: (title = '', contract = '', jobType = '', level = '', experienceYear = '', salaryRange = '', skillIds = [], page = 0, size = 6) => {
         const params = {
@@ -26,6 +30,10 @@ const jobAPI = {
         if (skillIds.length > 0) params.skillIds = skillIds.join(',');
     
         return API.get("/job/search", { params });
+    },
+    // API lấy chi tiết việc làm theo ID
+    getJobDetail: (id) => {
+        return API.get(`/job/${id}`);
     },
 };
 

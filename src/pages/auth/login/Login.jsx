@@ -1,12 +1,13 @@
+/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "./Login.module.css";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify"; // Import toast
-import "react-toastify/dist/ReactToastify.css"; // Import CSS của react-toastify
+import styles from "./Login.module.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import logo from "../../../assets/CVNest_logo.jpg";
-import { saveAccessToken } from "../../../helper/storage";
-import auth from "../../../api/auth"; // Import auth
+import { saveAccessToken, saveUserData } from "../../../helper/storage";
+import auth from "../../../api/auth";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -33,16 +34,17 @@ const Login = () => {
       return;
     }
 
-    setErrors(""); // Reset lỗi
+    setErrors("");
 
     try {
       const response = await auth.login(form.email, form.password);
 
       const { accessToken, user } = response.data.data;
       console.log("response: ", response.data);
-      console.log("accessToken: ", response.data.data.accessToken);
+      console.log("accessToken: ", accessToken);
       
       saveAccessToken(accessToken);
+      saveUserData(user);
 
       toast.success("Đăng nhập thành công!", {
         position: "top-right",
@@ -58,10 +60,6 @@ const Login = () => {
         autoClose: 2000,
       });
     }
-  };
-
-  const handleForgotPassword = () => {
-    navigate("/forgot-password");
   };
 
   return (

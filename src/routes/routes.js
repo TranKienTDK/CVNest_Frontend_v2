@@ -1,0 +1,15 @@
+export const ROUTES = {
+    HOME: "/",
+    CVMANAGEMENT: "/user/my-cv",
+    CREATENAMECV: "/user/my-cv/template",
+    CREATECVPAGE: "/user/my-cv/create",
+    DETAILCV: "/user/my-cv/update/:id",
+    UPDATECVPAGE: "/user/my-cv/update/:id",
+    COMPANIES: "/companies",
+    COMPANY_DETAIL: "/companies/:id",
+    JOBS: "/jobs",
+    JOB_DETAIL: "/jobs/:id",
+    APPLICATIONS: "/user/applications",
+    HR_APPLICATIONS: "/hr/applications",
+    HR_APPLICATION_DETAIL: "/hr/applications/:id",
+};
