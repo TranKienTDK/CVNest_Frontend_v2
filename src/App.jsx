@@ -24,6 +24,7 @@ import ViewCVDocument from "./pages/user/my-cv/ViewCVDocument";
 import JobDetail from "./pages/job/JobDetail";
 import ApplicationsManagement from "./pages/user/applications/ApplicationsManagement";
 import HRApplicationsManagement from "./pages/hr/ApplicationsManagement";
+import JobManagement from "./pages/hr/JobManagement";
 
 function App() {
     return (
@@ -55,6 +56,8 @@ function App() {
                 <Route path="/hr" Component={MainLayout}>
                     <Route path="applications" element={<HRApplicationsManagement />} />
                     <Route path="applications/:id" element={<HRApplicationsManagement />} />
+                    <Route path="jobs" element={<JobManagement />} />
+                    <Route path="jobs/:id" element={<JobManagement />} />
                 </Route>
                 
                 <Route path="/test" element={<></>}/>

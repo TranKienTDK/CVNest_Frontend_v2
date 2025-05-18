@@ -57,6 +57,7 @@ const ApplicationsManagement = () => {
   const [jobTitles, setJobTitles] = useState({});
   const [applicationsWithJobDetails, setApplicationsWithJobDetails] = useState([]);
   const [loadingCV, setLoadingCV] = useState(false); // Added loading state for CV
+  const [cvDetailsCache, setCvDetailsCache] = useState({}); // Add a cache for CV details
   const userData = getUserData();
 
   useEffect(() => {
@@ -124,29 +125,55 @@ const ApplicationsManagement = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    const fetchJobTitles = async () => {
+    const fetchJobTitlesAndCvDetails = async () => {
       const updatedApps = await Promise.all(
         applications.map(async (app) => {
-          if (jobTitles[app.jobId]) {
-            return { ...app, jobTitle: jobTitles[app.jobId] };
+          // Fetch job title if not already cached
+          let jobTitle = jobTitles[app.jobId];
+          if (!jobTitle) {
+            try {
+              const response = await jobAPI.getJobDetail(app.jobId);
+              jobTitle = response.data.data.title;
+              
+              setJobTitles(prev => ({
+                ...prev,
+                [app.jobId]: jobTitle
+              }));
+            } catch (error) {
+              console.error(`Error fetching job details for ID ${app.jobId}:`, error);
+              jobTitle = "Không xác định";
+            }
           }
           
-          try {
-            const response = await jobAPI.getJobDetail(app.jobId);
-            const jobTitle = response.data.data.title;
-            
-            setJobTitles(prev => ({
-              ...prev,
-              [app.jobId]: jobTitle
-            }));
-            
-            return { ...app, jobTitle };
-          } catch (error) {
-            console.error(`Error fetching job details for ID ${app.jobId}:`, error);
-            return { ...app, jobTitle: "Không xác định" };
+          // Fetch CV details if not already cached
+          let cvData = cvDetailsCache[app.cvId];
+          if (!cvData && app.cvId) {
+            try {
+              const response = await cvAPI.getDetailCv(app.cvId);
+              cvData = response.data.data;
+              
+              setCvDetailsCache(prev => ({
+                ...prev,
+                [app.cvId]: cvData
+              }));
+            } catch (error) {
+              console.error(`Error fetching CV details for ID ${app.cvId}:`, error);
+              cvData = null;
+            }
           }
+          
+          // Extract fullName and email from CV data
+          const fullName = cvData?.info?.fullName || app.applicantName || "Chưa có thông tin";
+          const email = cvData?.info?.email || app.email || "Chưa có thông tin";
+          
+          // Return updated application with job title and CV details
+          return { 
+            ...app, 
+            jobTitle, 
+            applicantName: fullName,
+            email: email
+          };
         })
       );
       
@@ -154,9 +181,9 @@ const ApplicationsManagement = () => {
     };
     
     if (applications.length > 0) {
-      fetchJobTitles();
+      fetchJobTitlesAndCvDetails();
     }
-  }, [applications]);
+  }, [applications, jobTitles, cvDetailsCache]);
 
   const handleApproveApplication = async (applyId) => {
     try {
@@ -179,13 +206,26 @@ const ApplicationsManagement = () => {
       message.error("Không thể từ chối đơn ứng tuyển");
     }
   };
-
   const handlePreviewCV = async (cvId) => {
     try {
       setLoadingCV(true);
-      const response = await cvAPI.getDetailCv(cvId);
-      setPreviewCV(response.data.data);
-      setShowPreviewModal(true);
+      // Use cached data if available, otherwise fetch from API
+      if (cvDetailsCache[cvId]) {
+        setPreviewCV(cvDetailsCache[cvId]);
+        setShowPreviewModal(true);
+      } else {
+        const response = await cvAPI.getDetailCv(cvId);
+        console.log("CV Data:", response.data.data);
+        
+        // Update the cache with new data
+        setCvDetailsCache(prev => ({
+          ...prev,
+          [cvId]: response.data.data
+        }));
+        
+        setPreviewCV(response.data.data);
+        setShowPreviewModal(true);
+      }
     } catch (error) {
       console.error("Error fetching CV details:", error);
       message.error("Không thể tải thông tin CV");
@@ -289,12 +329,19 @@ const ApplicationsManagement = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="container mx-auto pt-24 px-4 pb-8">
-        <div className="mb-6">
-          <Title level={2} className="mb-2">Quản lý CV ứng tuyển</Title>
-          <Text type="secondary">
-            Xem và quản lý tất cả các đơn ứng tuyển vào công ty của bạn
-          </Text>
+      <div className="container mx-auto pt-24 px-4 pb-8">        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <Title level={2} className="mb-2">Quản lý CV ứng tuyển</Title>
+            <Text type="secondary">
+              Xem và quản lý tất cả các đơn ứng tuyển vào công ty của bạn
+            </Text>
+          </div>
+          <Button 
+            type="primary" 
+            onClick={() => window.location.href = '/hr/jobs'}
+          >
+            Quản lý việc làm
+          </Button>
         </div>
 
         <Card className="mb-6">

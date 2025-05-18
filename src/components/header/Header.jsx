@@ -343,6 +343,26 @@ export default function Header({ className }) {
                   Công ty IT
                 </Link>
               </NavigationMenuItem>
+              
+              {/* HR Job Management - Only visible for HR users */}
+              {isHR && (
+                <NavigationMenuItem>
+                  <Link to={ROUTES.HR_JOBS} className={navigationMenuTriggerStyle()}>
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    Quản lý việc làm
+                  </Link>
+                </NavigationMenuItem>
+              )}
+              
+              {/* HR Applications Management - Only visible for HR users */}
+              {isHR && (
+                <NavigationMenuItem>
+                  <Link to={ROUTES.HR_APPLICATIONS} className={navigationMenuTriggerStyle()}>
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    Quản lý ứng viên
+                  </Link>
+                </NavigationMenuItem>
+              )}
 
               {/* Custom Công cụ dropdown */}
               {!isHR && <div
@@ -642,6 +662,20 @@ export default function Header({ className }) {
                     <Building2 className="h-4 w-4" />
                     <span className="hover:text-primaryRed">Công ty IT</span>
                   </Link>
+
+                  {/* HR specific navigation links for mobile */}
+                  {isHR && (
+                    <>
+                      <Link to={ROUTES.HR_JOBS} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                        <Briefcase className="h-4 w-4" />
+                        <span>Quản lý việc làm</span>
+                      </Link>
+                      <Link to={ROUTES.HR_APPLICATIONS} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                        <ClipboardList className="h-4 w-4" />
+                        <span>Quản lý ứng viên</span>
+                      </Link>
+                    </>
+                  )}
 
                   {/* Công cụ header with collapsible */}
                   {!isHR && <Collapsible className="w-full">

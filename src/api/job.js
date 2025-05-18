@@ -35,6 +35,25 @@ const jobAPI = {
     getJobDetail: (id) => {
         return API.get(`/job/${id}`);
     },
+    // API tạo việc làm mới
+    createJob: (jobData) => {
+        console.log('API createJob - Request payload:', jobData);
+        return API.post("/job", jobData);
+    },
+    // API cập nhật việc làm
+    updateJob: (id, jobData) => {
+        const payload = { ...jobData, id };
+        console.log('API updateJob - Request payload:', payload);
+        return API.put(`/job`, payload);
+    },
+    // API xóa việc làm
+    deleteJob: (id) => {
+        return API.delete(`/job/${id}`);
+    },
+    // API lấy danh sách việc làm của HR
+    getHrJobs: (hrId) => {
+        return API.get(`/job/hr/jobs/${hrId}`);
+    },
 };
 
 export default jobAPI;
