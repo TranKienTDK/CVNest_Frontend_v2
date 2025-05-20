@@ -25,10 +25,8 @@ import {
 
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
@@ -52,23 +50,8 @@ import websocketService from "@/api/websocket"
 import { formatDistanceToNow } from "date-fns"
 import viLocale from "date-fns/locale/vi"
 
-const CategoryItem = ({ icon: Icon, title, onMouseOver }) => (
-  <Link to="#" className="flex items-center gap-2 rounded-md p-2 hover:bg-muted" onMouseOver={onMouseOver}>
-    <Icon className="h-4 w-4" />
-    <div className="text-sm font-medium">{title}</div>
-  </Link>
-)
-
-// Subitem component for category dropdowns
-const SubItem = ({ title }) => (
-  <Link to="#" className="block py-1 hover:underline">
-    {title}
-  </Link>
-)
-
 export default function Header({ className }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [hoveredItem, setHoveredItem] = useState("capbac")
   const [showCongCuDropdown, setShowCongCuDropdown] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -201,31 +184,6 @@ export default function Header({ className }) {
     }
   }
 
-  // Data for categories and their subitems
-  const categories = {
-    capbac: {
-      title: "Theo cấp bậc",
-      icon: GraduationCap,
-      items: ["Intern", "Fresher", "Junior", "Middle", "Senior"],
-    },
-    loaihinh: {
-      title: "Theo loại hình",
-      icon: Settings,
-      items: ["Toàn thời gian", "Bán thời gian", "Từ xa"],
-    },
-    diadiem: {
-      title: "Theo địa điểm",
-      icon: MapPin,
-      items: ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng"],
-    },
-    kynang: {
-      title: "Theo kỹ năng",
-      icon: Hammer,
-      items: ["JavaScript", "React", "Node.js"],
-    },
-  }
-
-  // Handle logout
   const handleLogout = async () => {
     try {
       websocketService.disconnect();
@@ -306,34 +264,10 @@ export default function Header({ className }) {
             <NavigationMenuList>
               {/* Việc làm IT */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger>
+                <Link to={ROUTES.JOBS} className={navigationMenuTriggerStyle()}>
                   <Briefcase className="mr-2 h-4 w-4" />
                   Việc làm IT
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="grid w-[600px] grid-cols-5 p-4">
-                    <div className="col-span-2 space-y-2 border-r pr-4">
-                      {Object.entries(categories).map(([key, category]) => (
-                        <CategoryItem
-                          key={key}
-                          icon={category.icon}
-                          title={category.title}
-                          onMouseOver={() => setHoveredItem(key)}
-                        />
-                      ))}
-                    </div>
-                    <div className="col-span-3 pl-4">
-                      {categories[hoveredItem] && (
-                        <div className="space-y-2">
-                          <div className="font-medium mb-2">{categories[hoveredItem].title}</div>
-                          {categories[hoveredItem].items.map((item) => (
-                            <SubItem key={item} title={item} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </NavigationMenuContent>
+                </Link>
               </NavigationMenuItem>
 
               {/* Công ty IT */}
@@ -368,10 +302,11 @@ export default function Header({ className }) {
               {!isHR && <div
                 ref={congCuRef}
                 className="relative"
-                onMouseEnter={() => setShowCongCuDropdown(true)}
-                onMouseLeave={() => setShowCongCuDropdown(false)}
               >
-                <button className={`${navigationMenuTriggerStyle()} flex items-center justify-between`}>
+                <button 
+                  className={`${navigationMenuTriggerStyle()} flex items-center justify-between`}
+                  onClick={() => setShowCongCuDropdown(!showCongCuDropdown)}
+                >
                   <div className="flex items-center">
                     <Settings className="mr-2 h-4 w-4" />
                     Công cụ
@@ -385,7 +320,14 @@ export default function Header({ className }) {
 
                 {showCongCuDropdown && (
                   <div className="absolute left-0 top-full z-10 mt-1 w-[200px] rounded-md border bg-popover p-1 shadow-md">
-                    <Link to={ROUTES.CREATENAMECV} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                    <Link 
+                      to={ROUTES.CREATENAMECV} 
+                      className="flex items-center gap-2 rounded-md p-2 hover:bg-muted"
+                      onClick={() => {
+                        setShowCongCuDropdown(false);
+                        localStorage.removeItem('cv_draft'); // Xóa draft nếu có
+                      }}
+                    >
                       <FileEdit className="h-4 w-4" />
                       <div className="text-sm font-medium">Tạo CV</div>
                     </Link>
@@ -627,36 +569,10 @@ export default function Header({ className }) {
 
                 <div className="flex flex-col space-y-1">
                   {/* Việc làm IT */}
-                  <Collapsible className="w-full">
-                    <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 hover:bg-muted">
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4" />
-                        <span>Việc làm IT</span>
-                      </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="ml-6 space-y-1">
-                      {/* Map through categories for mobile */}
-                      {Object.entries(categories).map(([key, category]) => (
-                        <Collapsible key={key} className="w-full">
-                          <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md p-2 hover:bg-muted">
-                            <div className="flex items-center gap-2">
-                              <category.icon className="h-4 w-4" />
-                              <span>{category.title}</span>
-                            </div>
-                            <ChevronDown className="h-4 w-4" />
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="ml-6 space-y-1">
-                            {category.items.map((item) => (
-                              <Link key={item} to="#" className="block rounded-md p-2 hover:bg-muted">
-                                {item}
-                              </Link>
-                            ))}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
+                  <Link to={ROUTES.JOBS} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                    <Briefcase className="h-4 w-4" />
+                    <span>Việc làm IT</span>
+                  </Link>
 
                   <Link to={ROUTES.COMPANIES} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
                     <Building2 className="h-4 w-4" />
@@ -687,7 +603,14 @@ export default function Header({ className }) {
                       <ChevronDown className="h-4 w-4" />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="ml-6 space-y-1">
-                      <Link to={ROUTES.CREATENAMECV} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                      <Link 
+                        to={ROUTES.CREATENAMECV} 
+                        className="flex items-center gap-2 rounded-md p-2 hover:bg-muted"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          localStorage.removeItem('cv_draft'); // Xóa draft nếu có
+                        }}
+                      >
                         <FileEdit className="h-4 w-4" />
                         <span>Tạo CV</span>
                       </Link>
