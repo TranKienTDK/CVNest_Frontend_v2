@@ -7,14 +7,11 @@ import TemplateCV3 from "./CVTemplate/TemplateCV3";
 import TemplateCV4 from "./CVTemplate/TemplateCV4";
 import sampleDataCV4 from "./CVTemplate/sampleDataCV4";
 
-// Hàm chuyển đổi dữ liệu form sang định dạng API
 const prepareFormToApiData = (formData) => {
   if (!formData) return null;
 
-  // Clone để không ảnh hưởng đến dữ liệu gốc
   const data = JSON.parse(JSON.stringify(formData));
 
-  // Xử lý kỹ năng - đảm bảo thống nhất về cấu trúc
   if (data.skills && Array.isArray(data.skills)) {
     data.skills = data.skills.map((skill) => {
       let rateValue = 0;
@@ -33,14 +30,13 @@ const prepareFormToApiData = (formData) => {
     });
   }
 
-  // Chuẩn hóa dữ liệu giới thiệu
   if (data.about && !data.profile) {
     data.profile = data.about;
   } else if (data.profile && !data.about) {
     data.about = data.profile;
   }
 
-  // Đảm bảo có các mảng cần thiết
+  data.personalInfo = data.personalInfo || data.personal || {};
   data.experiences = data.experiences || data.workExperience || [];
   data.education = data.education || data.educations || [];
   data.projects = data.projects || [];

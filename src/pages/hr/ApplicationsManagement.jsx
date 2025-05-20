@@ -56,8 +56,8 @@ const ApplicationsManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [jobTitles, setJobTitles] = useState({});
   const [applicationsWithJobDetails, setApplicationsWithJobDetails] = useState([]);
-  const [loadingCV, setLoadingCV] = useState(false); // Added loading state for CV
-  const [cvDetailsCache, setCvDetailsCache] = useState({}); // Add a cache for CV details
+  const [loadingCV, setLoadingCV] = useState(false);
+  const [cvDetailsCache, setCvDetailsCache] = useState({});
   const userData = getUserData();
 
   useEffect(() => {
@@ -76,7 +76,6 @@ const ApplicationsManagement = () => {
       );
       setJobs(companyJobs);
       
-      // Select the first job by default if nothing is selected
       if (!selectedJobId && companyJobs.length > 0) {
         setSelectedJobId(companyJobs[0].id);
       }
@@ -99,7 +98,6 @@ const ApplicationsManagement = () => {
       
       let filteredApps = response.data.data || [];
       
-      // Filter by activeTab
       if (activeTab !== "all") {
         const tabStatus = activeTab === "pending" ? "PENDING" : 
                          activeTab === "approved" ? "APPROVED" : 
@@ -109,7 +107,6 @@ const ApplicationsManagement = () => {
         }
       }
 
-      // Filter by search keyword
       if (searchKeyword) {
         filteredApps = filteredApps.filter(app => 
           app.applicantName?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
@@ -146,7 +143,6 @@ const ApplicationsManagement = () => {
             }
           }
           
-          // Fetch CV details if not already cached
           let cvData = cvDetailsCache[app.cvId];
           if (!cvData && app.cvId) {
             try {
@@ -163,11 +159,9 @@ const ApplicationsManagement = () => {
             }
           }
           
-          // Extract fullName and email from CV data
           const fullName = cvData?.info?.fullName || app.applicantName || "Chưa có thông tin";
           const email = cvData?.info?.email || app.email || "Chưa có thông tin";
           
-          // Return updated application with job title and CV details
           return { 
             ...app, 
             jobTitle, 
@@ -189,7 +183,7 @@ const ApplicationsManagement = () => {
     try {
       await applyAPI.approveApplication(applyId);
       message.success("Đã duyệt đơn ứng tuyển");
-      fetchApplications(); // Refresh applications list
+      fetchApplications();
     } catch (err) {
       console.error("Error approving application:", err);
       message.error("Không thể duyệt đơn ứng tuyển");
@@ -209,7 +203,6 @@ const ApplicationsManagement = () => {
   const handlePreviewCV = async (cvId) => {
     try {
       setLoadingCV(true);
-      // Use cached data if available, otherwise fetch from API
       if (cvDetailsCache[cvId]) {
         setPreviewCV(cvDetailsCache[cvId]);
         setShowPreviewModal(true);
@@ -217,7 +210,6 @@ const ApplicationsManagement = () => {
         const response = await cvAPI.getDetailCv(cvId);
         console.log("CV Data:", response.data.data);
         
-        // Update the cache with new data
         setCvDetailsCache(prev => ({
           ...prev,
           [cvId]: response.data.data

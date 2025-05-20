@@ -37,14 +37,11 @@ const jobAPI = {
     },
     // API tạo việc làm mới
     createJob: (jobData) => {
-        console.log('API createJob - Request payload:', jobData);
         return API.post("/job", jobData);
     },
     // API cập nhật việc làm
     updateJob: (id, jobData) => {
-        const payload = { ...jobData, id };
-        console.log('API updateJob - Request payload:', payload);
-        return API.put(`/job`, payload);
+        return API.put(`/job`, { ...jobData, id });
     },
     // API xóa việc làm
     deleteJob: (id) => {

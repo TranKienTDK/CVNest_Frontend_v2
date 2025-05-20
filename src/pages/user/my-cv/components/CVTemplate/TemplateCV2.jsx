@@ -8,15 +8,23 @@ import {
   Svg,
   Text,
   View,
+  pdf,
 } from "@react-pdf/renderer";
 import { htmlToText } from "html-to-text";
 import robotoFont from "@/assets/Roboto-VariableFont_wdth,wght.ttf";
+import notoFont from "@/assets/NotoSans-Regular.ttf";
 import dayjs from "dayjs";
 
-// Register font
+pdf.enableCORS = true;
+
 Font.register({
   family: "Roboto",
   src: robotoFont,
+});
+
+Font.register({
+  family: "NotoSans",
+  src: notoFont,
 });
 
 const Icon = ({ path }) => (
@@ -40,6 +48,41 @@ const paths = {
     "M6 7V6a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v1h1.5A1.5 1.5 0 0 1 21 8.5v11A1.5 1.5 0 0 1 19.5 21h-15A1.5 1.5 0 0 1 3 19.5v-11A1.5 1.5 0 0 1 4.5 7H6zm2.25-1v1h7.5V6a.75.75 0 0 0-.75-.75h-6a.75.75 0 0 0-.75.75z",
   academicCap:
     "M11.7 1.5a1.5 1.5 0 0 1 .6 0l9 3a1.5 1.5 0 0 1 0 2.828l-9 3a1.5 1.5 0 0 1-.6 0l-9-3a1.5 1.5 0 0 1 0-2.828l9-3zm9.3 7.63v4.12a1.5 1.5 0 0 1-.832 1.341l-7.5 3.75a1.5 1.5 0 0 1-1.336 0l-7.5-3.75A1.5 1.5 0 0 1 3 13.25V9.13l8.4 2.8a3 3 0 0 0 1.2 0l8.4-2.8z",
+};
+
+const StarIconSVG = ({
+  filled,
+  size = 8, // Kích thước ngôi sao nhỏ hơn cho CV
+  fillColor = '#FFD700',
+  emptyColor = '#B0B0B0', // Màu xám nhạt cho sao rỗng (trong cột màu xanh)
+  strokeColor = '#FFD700'
+}) => {
+  const starPath = "M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.966-7.417 3.966 1.481-8.279-6.064-5.828 8.332-1.151z";
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      style={{ marginRight: 1 }} // Khoảng cách nhỏ giữa các sao
+    >
+      <Path
+        d={starPath}
+        fill={filled ? fillColor : 'none'}
+        stroke={filled ? strokeColor : emptyColor}
+        strokeWidth={1.5} // Điều chỉnh độ dày viền nếu cần
+      />
+    </Svg>
+  );
+};
+
+const SvgStarRating = ({ rate, totalStars = 5 }) => {
+  const stars = [];
+  // Đảm bảo rate là số và nằm trong khoảng
+  const currentRate = Math.max(0, Math.min(parseInt(rate, 10) || 0, totalStars));
+  for (let i = 1; i <= totalStars; i++) {
+    stars.push(<StarIconSVG key={i} filled={i <= currentRate} />);
+  }
+  return <View style={{ flexDirection: 'row', alignItems: 'center' }}>{stars}</View>;
 };
 
 const SectionTitle = ({ children }) => (
@@ -81,10 +124,9 @@ const LeftSectionTitle = ({ children }) => (
 );
 
 export const TemplateCV2 = ({ data = {} }) => {
-  console.log("TemplateCV2 data:", data);
-
-  return (
+  console.log("TemplateCV2 data:", data); return (
     <Document>
+      {/* First Page */}
       <Page
         size="A4"
         style={{
@@ -100,7 +142,7 @@ export const TemplateCV2 = ({ data = {} }) => {
             backgroundColor: "#1E3A8A",
             padding: 20,
             color: "white",
-            height: "100%",
+            minHeight: "100%",
             alignItems: "center",
           }}
         >
@@ -231,9 +273,12 @@ export const TemplateCV2 = ({ data = {} }) => {
               <LeftSectionTitle>Skills</LeftSectionTitle>
               <View style={{ paddingLeft: 12 }}>
                 {data.skills.map((skill, index) => (
-                  <Text key={index} style={{ fontSize: 10, marginBottom: 4 }}>
-                    • {skill.name || skill.skill}
-                  </Text>
+                  <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                    <Text style={{ fontSize: 10, color: 'white', marginRight: 5 }}> {/* Màu trắng cho chữ */}
+                      • {skill.name || skill.skill}
+                    </Text>
+                    <SvgStarRating rate={skill.rate} />
+                  </View>
                 ))}
               </View>
             </View>
@@ -261,10 +306,9 @@ export const TemplateCV2 = ({ data = {} }) => {
             backgroundColor: "white",
             padding: 24,
           }}
-        >
-          {/* Profile Section */}
+        >          {/* Profile Section */}
           {data.introduction && (
-            <View style={{ marginBottom: 24 }}>
+            <View style={{ marginBottom: 24, paddingTop: 10 }} wrap={false}>
               <SectionTitle>Profile</SectionTitle>
               <Text style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.5 }}>
                 {htmlToText(data.introduction, {
@@ -275,14 +319,12 @@ export const TemplateCV2 = ({ data = {} }) => {
                   .filter((line) => line.trim() !== "")}
               </Text>
             </View>
-          )}
-
-          {/* Work Experience Section */}
+          )}          {/* Work Experience Section */}
           {data.experiences?.some((exp) => !!exp.company) && (
-            <View style={{ marginBottom: 24 }}>
+            <View style={{ marginBottom: 24, paddingTop: 10 }} wrap={false}>
               <SectionTitle>Work Experience</SectionTitle>
               {data.experiences.map((exp, index) => (
-                <View key={index} style={{ marginBottom: 16 }}>
+                <View key={index} style={{ marginBottom: 16 }} wrap={false}>
                   <View
                     style={{
                       flexDirection: "row",
@@ -328,14 +370,12 @@ export const TemplateCV2 = ({ data = {} }) => {
                 </View>
               ))}
             </View>
-          )}
-
-          {/* Projects Section */}
+          )}          {/* Projects Section */}
           {data.projects?.some((project) => !!project.project) && (
-            <View style={{ marginBottom: 24 }}>
+            <View style={{ marginBottom: 24, paddingTop: 10 }} wrap={false}>
               <SectionTitle>Projects</SectionTitle>
               {data.projects.map((project, index) => (
-                <View key={index} style={{ marginBottom: 12 }}>
+                <View key={index} style={{ marginBottom: 12 }} wrap={false}>
                   <Text
                     style={{
                       fontSize: 12,
@@ -366,13 +406,11 @@ export const TemplateCV2 = ({ data = {} }) => {
                 </View>
               ))}
             </View>
-          )}
-
-          {/* References Section */}
+          )}          {/* References Section */}
           {data.consultants?.some((ref) => !!ref.name) && (
-            <View style={{ marginBottom: 24 }}>
+            <View style={{ marginBottom: 24, paddingTop: 10 }} wrap={false}>
               <SectionTitle>References</SectionTitle>
-              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap" }} wrap={false}>
                 {data.consultants.map((ref, index) => (
                   <View
                     key={index}
@@ -410,10 +448,16 @@ export const TemplateCV2 = ({ data = {} }) => {
 
           {/* Activities Section */}
           {data.activities?.some((activity) => !!activity.activity) && (
-            <View style={{ marginBottom: 24 }}>
+            <View
+              style={{
+                marginBottom: 24,
+                paddingTop: 15
+              }}
+              wrap={false}
+            >
               <SectionTitle>Activities</SectionTitle>
               {data.activities.map((activity, index) => (
-                <View key={index} style={{ marginBottom: 8 }}>
+                <View key={index} style={{ marginBottom: 8 }} wrap={false}>
                   <Text
                     style={{
                       fontSize: 10,
@@ -477,11 +521,9 @@ export const TemplateCV2 = ({ data = {} }) => {
                 </View>
               ))}
             </View>
-          )}
-
-          {/* Additional Information */}
+          )}          {/* Additional Information */}
           {data.additionalInfo && (
-            <View style={{ marginBottom: 24 }}>
+            <View style={{ marginBottom: 24, paddingTop: 10 }} wrap={false}>
               <SectionTitle>Additional Information</SectionTitle>
               <Text style={{ fontSize: 10, color: "#4B5563" }}>
                 {htmlToText(data.additionalInfo, {

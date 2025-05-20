@@ -4,6 +4,9 @@ import {Document, Font, Image, Page, Path, Svg, Text, View} from '@react-pdf/ren
 import {htmlToText} from "html-to-text";
 import robotoFont from '@/assets/Roboto-VariableFont_wdth,wght.ttf';
 import dayjs from 'dayjs';
+import { pdf } from '@react-pdf/renderer';
+
+pdf.enableCORS = true;
 
 // Đăng ký font
 Font.register({
@@ -52,11 +55,9 @@ const Dot = () => (
 );
 
 export const TemplateCV1 = ({data = {}}) => {
-    console.log("dataaaaaaaaaaaaaaa: ", data);
-    console.log('edu', data.education);
-
     return (
         <Document>
+            {/* First Page */}
             <Page size="A4" style={{
                 fontFamily: 'Roboto',
                 borderRadius: 10,
@@ -70,7 +71,7 @@ export const TemplateCV1 = ({data = {}}) => {
                         position: 'relative'
                     }}>
                         <Image
-                            src={data.avatar || "http://localhost:5173/src/assets/temp1.jpg"}
+                            src={data.personalInfo?.avatar || "http://localhost:5173/src/assets/temp1.jpg"}
                             style={{
                                 width: 50,
                                 height: 50,
@@ -96,10 +97,10 @@ export const TemplateCV1 = ({data = {}}) => {
 
                     <View style={{marginBottom: 16, textAlign: 'center', width: '100%'}}>
                         <Text x={0} y={0} style={{fontSize: 20, fontWeight: 'bold', color: '#2E3B55', marginBottom: 8}}>
-                            {data.info?.fullName || "Fullname"}
+                            {data.personalInfo?.fullname || "Fullname"}
                         </Text>
                         <Text x={0} y={0} style={{fontSize: 14, color: '#6A5ACD', marginBottom: 8}}>
-                            {data.info?.position || "Position"}
+                            {data.personalInfo?.position || "Position"}
                         </Text>
 
                         {/* Row 1 */}
@@ -117,7 +118,7 @@ export const TemplateCV1 = ({data = {}}) => {
                             }}>
                                 <Icon path={paths.phone}/>
                                 <Text x={0} y={0} style={{fontSize: 10}}>
-                                    {data.info?.phone || "Phone"}
+                                    {data.personalInfo?.phone || "Phone"}
                                 </Text>
                             </View>
 
@@ -129,7 +130,7 @@ export const TemplateCV1 = ({data = {}}) => {
                             }}>
                                 <Icon path={paths.email}/>
                                 <Text x={0} y={0} style={{fontSize: 10}}>
-                                    {data.info?.email || "Email"}
+                                    {data.personalInfo?.email || "Email"}
                                 </Text>
                             </View>
 
@@ -141,7 +142,7 @@ export const TemplateCV1 = ({data = {}}) => {
                             }}>
                                 <Icon path={paths.location}/>
                                 <Text x={0} y={0} style={{fontSize: 10}}>
-                                    {data.info?.address || "Address"}
+                                    {data.personalInfo?.address || "Address"}
                                 </Text>
                             </View>
                         </View>
@@ -161,7 +162,7 @@ export const TemplateCV1 = ({data = {}}) => {
                             }}>
                                 <Icon path={paths.linkedin}/>
                                 <Text x={0} y={0} style={{fontSize: 10}}>
-                                    {data.info?.linkedin || "linkedin.com/in/alexjohnson"}
+                                    {data.personalInfo?.linkedin || "linkedin.com/in/alexjohnson"}
                                 </Text>
                             </View>
 
@@ -173,14 +174,14 @@ export const TemplateCV1 = ({data = {}}) => {
                             }}>
                                 <Icon path={paths.github}/>
                                 <Text x={0} y={0} style={{fontSize: 10}}>
-                                    {data.info?.github || "github.com/alexjohnson"}
+                                    {data.personalInfo?.github || "github.com/alexjohnson"}
                                 </Text>
                             </View>
                         </View>
                     </View>
                 </View>
 
-                <View style={{textAlign: 'center', marginVertical: 10}}>
+                <View style={{textAlign: 'center', marginVertical: 10}} wrap={false}>
                     {/* Title */}
                     <Text x={0} y={0}
                           style={{
@@ -217,12 +218,13 @@ export const TemplateCV1 = ({data = {}}) => {
                     {/* Left Column */}
                     <View style={{flex: 1}}>
                         {/* Experience */}
-                        <View style={{marginBottom: 10}}>
+                        <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                             <Title>Experience</Title>
 
                             {data.experiences && data.experiences.map((experience, index) => (
                                 <View key={index}
-                                      style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}>
+                                      style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                      wrap={false}>
                                     <Dot/>
                                     <View>
                                         <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
@@ -243,14 +245,15 @@ export const TemplateCV1 = ({data = {}}) => {
                         </View>
 
                         {/* Education */}
-                        <View style={{marginBottom: 10}}>
+                        <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                             <Title>Education</Title>
 
                             {data.education && data.education.map((education, index) => {
                                 console.log("education: ", education);
                                 return (
                                 <View key={index}
-                                      style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}>
+                                      style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                      wrap={false}>
                                     <Dot/>
                                     <View>
                                         <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
@@ -271,21 +274,27 @@ export const TemplateCV1 = ({data = {}}) => {
                         </View>
 
                         {data.projects?.some(project => !!project.project) && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>Projects</Title>
-                                <View style={{paddingLeft: 10}}>
-                                    {data.projects.map((project, index) => (
-                                        <View key={index} style={{marginBottom: 4}}>
-                                            <Text x={0} y={0} style={{fontSize: 9, fontWeight: 'bold'}}>• {project.project}</Text>
+                                
+                                {data.projects.map((project, index) => (
+                                    <View key={index} 
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
+                                                {project.project}
+                                            </Text>
                                             {(project.startDate || project.endDate) && (
-                                                <Text x={0} y={0} style={{fontSize: 8}}>
+                                                <Text x={0} y={0} style={{fontSize: 9}}>
                                                     {project.startDate && dayjs(project.startDate).format("MM/YYYY")} 
                                                     {project.startDate && project.endDate ? " - " : ""} 
                                                     {project.endDate && dayjs(project.endDate).format("MM/YYYY")}
                                                 </Text>
                                             )}
                                             {project.description && (
-                                                <Text x={0} y={0} style={{fontSize: 8, marginTop: 1, paddingLeft: 5}}>
+                                                <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
                                                     {htmlToText(project.description, {
                                                         wordwrap: false,
                                                         preserveNewlines: true,
@@ -293,70 +302,102 @@ export const TemplateCV1 = ({data = {}}) => {
                                                 </Text>
                                             )}
                                         </View>
-                                    ))}
-                                </View>
+                                    </View>
+                                ))}
                             </View>
                         )}
 
                         {data.interests?.some(interest => !!interest.interest) && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>Hobbies</Title>
-                                <View style={{paddingLeft: 10}}>
-                                    {data.interests.map((interest, index) => (
-                                        <Text key={index} x={0} y={0} style={{fontSize: 9}}>• {interest.interest}</Text>
-                                    ))}
-                                </View>
+                                
+                                {data.interests.map((interest, index) => (
+                                    <View key={index} 
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4}}
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10}}>
+                                                {interest.interest}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                ))}
                             </View>
                         )}
 
                         {data.consultants?.some(consultant => !!consultant.name) && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>References</Title>
-                                <View style={{paddingLeft: 10}}>
-                                    {data.consultants.map((consultant, index) => (
-                                        <View key={index} style={{marginBottom: 4}}>
-                                            <Text x={0} y={0} style={{fontSize: 9, fontWeight: 'bold'}}>• {consultant.name}</Text>
+                                
+                                {data.consultants.map((consultant, index) => (
+                                    <View key={index} 
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
+                                                {consultant.name}
+                                            </Text>
                                             {consultant.position && (
-                                                <Text x={0} y={0} style={{fontSize: 8, paddingLeft: 5}}>{consultant.position}</Text>
+                                                <Text x={0} y={0} style={{fontSize: 9}}>
+                                                    {consultant.position}
+                                                </Text>
                                             )}
                                             {consultant.email && (
-                                                <Text x={0} y={0} style={{fontSize: 8, paddingLeft: 5}}>{consultant.email}</Text>
+                                                <Text x={0} y={0} style={{fontSize: 9}}>
+                                                    {consultant.email}
+                                                </Text>
                                             )}
                                             {consultant.phone && (
-                                                <Text x={0} y={0} style={{fontSize: 8, paddingLeft: 5}}>{consultant.phone}</Text>
+                                                <Text x={0} y={0} style={{fontSize: 9}}>
+                                                    {consultant.phone}
+                                                </Text>
                                             )}
                                         </View>
-                                    ))}
-                                </View>
+                                    </View>
+                                ))}
                             </View>
                         )}
 
                         {data.additionalInfo && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>Additional Information</Title>
-                                <View style={{paddingLeft: 10}}>
-                                    <Text x={0} y={0} style={{fontSize: 9}}>
-                                        {htmlToText(data.additionalInfo, {
-                                            wordwrap: false,
-                                            preserveNewlines: true,
-                                        }).split('\n').filter(line => line.trim() !== '')}
-                                    </Text>
+                                
+                                <View style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}>
+                                    <Dot/>
+                                    <View>
+                                        <Text x={0} y={0} style={{fontSize: 10}}>
+                                            {htmlToText(data.additionalInfo, {
+                                                wordwrap: false,
+                                                preserveNewlines: true,
+                                            }).split('\n').filter(line => line.trim() !== '')}
+                                        </Text>
+                                    </View>
                                 </View>
                             </View>
                         )}
 
                         {data.certificates?.some(cert => !!cert.certificate) && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>Certificates</Title>
-                                <View style={{paddingLeft: 10}}>
-                                    {data.certificates.map((cert, index) => (
-                                        <View key={index} style={{marginBottom: 4}}>
-                                            <Text x={0} y={0} style={{fontSize: 9, fontWeight: 'bold'}}>• {cert.certificate}</Text>
+                                
+                                {data.certificates.map((cert, index) => (
+                                    <View key={index} 
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
+                                                {cert.certificate}
+                                            </Text>
                                             {cert.date && (
-                                                <Text x={0} y={0} style={{fontSize: 8}}>{dayjs(cert.date).format("MM/YYYY")}</Text>
+                                                <Text x={0} y={0} style={{fontSize: 9}}>
+                                                    {dayjs(cert.date).format("MM/YYYY")}
+                                                </Text>
                                             )}
                                             {cert.description && (
-                                                <Text x={0} y={0} style={{fontSize: 8, paddingLeft: 5}}>
+                                                <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
                                                     {htmlToText(cert.description, {
                                                         wordwrap: false,
                                                         preserveNewlines: true,
@@ -364,8 +405,8 @@ export const TemplateCV1 = ({data = {}}) => {
                                                 </Text>
                                             )}
                                         </View>
-                                    ))}
-                                </View>
+                                    </View>
+                                ))}
                             </View>
                         )}
                     </View>
@@ -373,10 +414,10 @@ export const TemplateCV1 = ({data = {}}) => {
                     {/* Right Column */}
                     <View style={{flex: 1}}>
                         {/* Skills 3/5*100 */}
-                        <View style={{marginBottom: 10}}>
+                        <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                             <Title>Skills</Title>
                             {data.skills && data.skills.map((skill, index) => (
-                                <View key={index} style={{marginBottom: 4}}>
+                                <View key={index} style={{marginBottom: 4}} wrap={false}>
                                     <Text x={0} y={0} style={{fontSize: 9}}>{skill.name || skill.skill}</Text>
                                     <View style={{height: 5, backgroundColor: '#E5E7EB', borderRadius: 2}}>
                                         <View
@@ -394,7 +435,7 @@ export const TemplateCV1 = ({data = {}}) => {
 
                         {/* Languages */}
                         {data.languages?.some(lang => !!lang.language) && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>Languages</Title>
                                 {data.languages.map((lang, index) => (
                                     <View key={index}
@@ -410,21 +451,27 @@ export const TemplateCV1 = ({data = {}}) => {
 
                         {/* Activities */}
                         {data.activities?.some(activity => !!activity.activity) && (
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
                                 <Title>Activities</Title>
-                                <View style={{paddingLeft: 10}}>
-                                    {data.activities.map((activity, index) => (
-                                        <View key={index} style={{marginBottom: 4}}>
-                                            <Text x={0} y={0} style={{fontSize: 9, fontWeight: 'bold'}}>• {activity.activity}</Text>
+                                
+                                {data.activities.map((activity, index) => (
+                                    <View key={index} 
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}} 
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
+                                                {activity.activity}
+                                            </Text>
                                             {(activity.startDate || activity.endDate) && (
-                                                <Text x={0} y={0} style={{fontSize: 8}}>
+                                                <Text x={0} y={0} style={{fontSize: 9}}>
                                                     {activity.startDate && dayjs(activity.startDate).format("MM/YYYY")} 
                                                     {activity.startDate && activity.endDate ? " - " : ""} 
                                                     {activity.endDate && dayjs(activity.endDate).format("MM/YYYY")}
                                                 </Text>
                                             )}
                                             {activity.description && (
-                                                <Text x={0} y={0} style={{fontSize: 8, paddingLeft: 5}}>
+                                                <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
                                                     {htmlToText(activity.description, {
                                                         wordwrap: false,
                                                         preserveNewlines: true,
@@ -432,8 +479,8 @@ export const TemplateCV1 = ({data = {}}) => {
                                                 </Text>
                                             )}
                                         </View>
-                                    ))}
-                                </View>
+                                    </View>
+                                ))}
                             </View>
                         )}
                     </View>

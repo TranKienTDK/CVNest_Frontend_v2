@@ -193,17 +193,14 @@ const JobManagement = () => {
     { value: "HYBRID", label: "Kết hợp" },
     { value: "REMOTE", label: "Làm việc từ xa" },
   ];  useEffect(() => {
-    console.log('User data:', userData);
     fetchJobs();
     fetchSkills();
     
     if (userData?.role === 'HR' && userData?.companyId) {
-      console.log('CompanyId found in user data:', userData.companyId);
       setCompanyId(userData.companyId);
-    } else {
-      console.warn('No companyId found in user data');
     }
-  }, []);const fetchJobs = async () => {
+  }, []);
+  const fetchJobs = async () => {
     setLoading(true);
     try {
       if (!userData?.id) {
@@ -212,21 +209,13 @@ const JobManagement = () => {
           autoClose: 2000,
         });
         return;
-      }      const response = await jobAPI.getHrJobs(userData.id);
-      console.log('Response from getHrJobs:', response.data);
+      }
+      const response = await jobAPI.getHrJobs(userData.id);
       const jobsData = response.data.data || [];
       setJobs(jobsData);
       
-      if (jobsData.length > 0) {
-        console.log('First job data:', jobsData[0]);
-        if (jobsData[0].companyId) {
-          console.log('CompanyId found in job data:', jobsData[0].companyId);
-          setCompanyId(jobsData[0].companyId);
-        } else {
-          console.warn('No companyId found in job data');
-        }
-      } else {
-        console.warn('No jobs data returned from API');
+      if (jobsData.length > 0 && jobsData[0].companyId) {
+        setCompanyId(jobsData[0].companyId);
       }
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -345,20 +334,15 @@ const JobManagement = () => {
         skillIds: values.skills || [],
         companyId: companyId, // Thêm companyId vào dữ liệu công việc
       };
-        console.log('Job data being submitted:', jobData);
       
       if (isEditing && currentJob) {
-        console.log('Updating job with ID:', currentJob.id);
-        const updateResponse = await jobAPI.updateJob(currentJob.id, jobData);
-        console.log('Update job response:', updateResponse.data);
+        await jobAPI.updateJob(currentJob.id, jobData);
         toast.success("Cập nhật việc làm thành công!", {
           position: "top-right",
           autoClose: 2000,
         });
       } else {
-        console.log('Creating new job with companyId:', companyId);
-        const createResponse = await jobAPI.createJob(jobData);
-        console.log('Create job response:', createResponse.data);
+        await jobAPI.createJob(jobData);
         toast.success("Tạo việc làm mới thành công!", {
           position: "top-right",
           autoClose: 2000,

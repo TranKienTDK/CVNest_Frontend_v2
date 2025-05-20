@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from "./style.module.css";
 import { ROUTES } from '@/routes/routes';
 import logo1 from "../../../assets/temp1.jpg";
@@ -20,6 +20,31 @@ function CreateNameCV() {
   const [errors, setErrors] = useState({});
   const [previewImage, setPreviewImage] = useState(null); 
   const navigate = useNavigate();
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('cv_draft');
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        if (parsedDraft.templateId) {
+          const templateId = typeof parsedDraft.templateId === 'string' 
+            ? parseInt(parsedDraft.templateId, 10) 
+            : parsedDraft.templateId;
+          
+          setForm(prev => ({ 
+            ...prev, 
+            templateId: templateId,
+            name: parsedDraft.name || prev.name
+          }));
+          
+          if (!parsedDraft.name) {
+            localStorage.removeItem('cv_draft');
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing saved draft:", error);
+      }
+    }
+  }, []);
 
   const validateForm = () => {
     let newErrors = {};

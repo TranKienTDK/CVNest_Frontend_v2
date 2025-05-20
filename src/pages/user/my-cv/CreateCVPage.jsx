@@ -55,7 +55,6 @@ function CreateCVPage() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
 
-  // Chỉ tải dữ liệu ban đầu từ localStorage, không có auto-save
   useEffect(() => {
     const draft = localStorage.getItem("cv_draft");
     if (draft) {
