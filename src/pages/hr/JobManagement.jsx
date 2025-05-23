@@ -1,37 +1,40 @@
 // JobManagement.jsx
 import React, { useState, useEffect } from "react";
-import { 
-  Typography, 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
-  Modal, 
-  Form, 
-  Input, 
-  DatePicker, 
-  Select, 
-  InputNumber, 
-  Popconfirm, 
+import { useNavigate } from "react-router-dom";
+import {
+  Typography,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  Select,
+  InputNumber,
+  Popconfirm,
   message,
   Card,
   Row,
   Col,
   Spin,
-  Tooltip
+  Tooltip,
+  Radio,
+  Alert
 } from "antd";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ReactMarkdown from 'react-markdown';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
   CalendarOutlined,
-  DollarOutlined, 
-  ClockCircleOutlined, 
-  TeamOutlined, 
+  DollarOutlined,
+  ClockCircleOutlined,
+  TeamOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
   AlertOutlined,
@@ -60,58 +63,58 @@ const parseDescription = (description) => {
   if (!description) return [];
 
   const sectionDefinitions = [
-    { 
-      title: "Mô tả công việc", 
-      key: "jobDescription", 
-      keywords: ["responsibilities", "mô tả công việc", "nhiệm vụ", "job description"] 
+    {
+      title: "Mô tả công việc",
+      key: "jobDescription",
+      keywords: ["responsibilities", "mô tả công việc", "nhiệm vụ", "job description"]
     },
-    { 
-      title: "Yêu cầu công việc", 
-      key: "requirements", 
-      keywords: ["requirements", "yêu cầu", "qualifications", "kinh nghiệm"] 
+    {
+      title: "Yêu cầu công việc",
+      key: "requirements",
+      keywords: ["requirements", "yêu cầu", "qualifications", "kinh nghiệm"]
     },
-    { 
-      title: "Quyền lợi", 
-      key: "benefits", 
-      keywords: ["benefits", "quyền lợi", "chế độ", "đãi ngộ", "phúc lợi"] 
+    {
+      title: "Quyền lợi",
+      key: "benefits",
+      keywords: ["benefits", "quyền lợi", "chế độ", "đãi ngộ", "phúc lợi"]
     },
-    { 
-      title: "Học vấn", 
-      key: "education", 
-      keywords: ["education", "học vấn", "bằng cấp", "bachelor", "master", "degree"] 
+    {
+      title: "Học vấn",
+      key: "education",
+      keywords: ["education", "học vấn", "bằng cấp", "bachelor", "master", "degree"]
     },
-    { 
-      title: "Chứng chỉ", 
-      key: "certification", 
-      keywords: ["certification", "chứng chỉ"] 
+    {
+      title: "Chứng chỉ",
+      key: "certification",
+      keywords: ["certification", "chứng chỉ"]
     },
-    { 
-      title: "Lương thưởng", 
-      key: "salary", 
-      keywords: ["salary", "lương", "thưởng", "compensation"] 
+    {
+      title: "Lương thưởng",
+      key: "salary",
+      keywords: ["salary", "lương", "thưởng", "compensation"]
     }
   ];
 
   const result = {};
   let currentSection = null;
   let currentContent = [];
-  
+
   const lines = description.split("\n");
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    
-    const isSection = line === line.toUpperCase() || 
-                     /^(REQUIREMENTS|RESPONSIBILITIES|BENEFITS|EDUCATION|CERTIFICATION|SALARY|YÊU CẦU|MÔ TẢ|QUYỀN LỢI|HỌC VẤN|CHỨNG CHỈ|LƯƠNG)/.test(line) ||
-                     /^#+\s+/.test(line);
-    
+
+    const isSection = line === line.toUpperCase() ||
+      /^(REQUIREMENTS|RESPONSIBILITIES|BENEFITS|EDUCATION|CERTIFICATION|SALARY|YÊU CẦU|MÔ TẢ|QUYỀN LỢI|HỌC VẤN|CHỨNG CHỈ|LƯƠNG)/.test(line) ||
+      /^#+\s+/.test(line);
+
     if (isSection) {
       if (currentSection) {
         result[currentSection] = currentContent.join('\n');
         currentContent = [];
       }
-      
+
       let foundSection = null;
       for (const section of sectionDefinitions) {
         if (section.keywords.some(keyword => line.toLowerCase().includes(keyword.toLowerCase()))) {
@@ -120,7 +123,7 @@ const parseDescription = (description) => {
           break;
         }
       }
-      
+
       if (!foundSection) {
         currentSection = line.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
         sectionDefinitions.push({
@@ -140,11 +143,11 @@ const parseDescription = (description) => {
       }
     }
   }
-  
+
   if (currentSection && currentContent.length > 0) {
     result[currentSection] = currentContent.join('\n');
   }
-  
+
   if (Array.isArray(result.jobDescription)) {
     result.jobDescription = result.jobDescription.join('\n');
   }
@@ -164,12 +167,14 @@ const JobManagement = () => {
   const [skills, setSkills] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentJob, setCurrentJob] = useState(null);
-  const [form] = Form.useForm();
+  const [currentJob, setCurrentJob] = useState(null); const [form] = Form.useForm();
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [viewJob, setViewJob] = useState(null);
   const [companyId, setCompanyId] = useState(null);
+  const [evaluateModalVisible, setEvaluateModalVisible] = useState(false);
+  const [selectedEvaluationJob, setSelectedEvaluationJob] = useState(null);
   const userData = getUserData();
+  const navigate = useNavigate();
 
   const contractOptions = [
     { value: "FULL_TIME", label: "Toàn thời gian" },
@@ -192,10 +197,10 @@ const JobManagement = () => {
     { value: "IN_OFFICE", label: "Làm việc tại văn phòng" },
     { value: "HYBRID", label: "Kết hợp" },
     { value: "REMOTE", label: "Làm việc từ xa" },
-  ];  useEffect(() => {
+  ]; useEffect(() => {
     fetchJobs();
     fetchSkills();
-    
+
     if (userData?.role === 'HR' && userData?.companyId) {
       setCompanyId(userData.companyId);
     }
@@ -213,7 +218,7 @@ const JobManagement = () => {
       const response = await jobAPI.getHrJobs(userData.id);
       const jobsData = response.data.data || [];
       setJobs(jobsData);
-      
+
       if (jobsData.length > 0 && jobsData[0].companyId) {
         setCompanyId(jobsData[0].companyId);
       }
@@ -237,7 +242,8 @@ const JobManagement = () => {
       } else {
         console.error("Unexpected skills data format:", response.data);
         setSkills([]);
-      }    } catch (error) {
+      }
+    } catch (error) {
       console.error("Error fetching skills:", error);
       toast.error("Không thể tải danh sách kỹ năng", {
         position: "top-right",
@@ -265,7 +271,7 @@ const JobManagement = () => {
   const showEditModal = (job) => {
     setIsEditing(true);
     setCurrentJob(job);
-    
+
     let skillValues = [];
     if (job.skills && Array.isArray(job.skills)) {
       skillValues = job.skills.map(skill => {
@@ -285,7 +291,7 @@ const JobManagement = () => {
       contract: job.contract,
       level: job.level,
       jobType: job.jobType,
-      dateRange: job.startDate && job.endDate 
+      dateRange: job.startDate && job.endDate
         ? [dayjs(job.startDate), dayjs(job.endDate)]
         : undefined,
       description: job.description,
@@ -320,7 +326,7 @@ const JobManagement = () => {
         });
         return;
       }
-      
+
       const jobData = {
         title: values.title,
         contract: values.contract,
@@ -334,7 +340,7 @@ const JobManagement = () => {
         skillIds: values.skills || [],
         companyId: companyId, // Thêm companyId vào dữ liệu công việc
       };
-      
+
       if (isEditing && currentJob) {
         await jobAPI.updateJob(currentJob.id, jobData);
         toast.success("Cập nhật việc làm thành công!", {
@@ -439,15 +445,15 @@ const JobManagement = () => {
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Xem chi tiết">
-            <Button 
-              icon={<EyeOutlined />} 
+            <Button
+              icon={<EyeOutlined />}
               onClick={() => showViewModal(record.id)}
               type="default"
             />
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <Button 
-              icon={<EditOutlined />} 
+            <Button
+              icon={<EditOutlined />}
               onClick={() => showEditModal(record)}
               type="primary"
             />
@@ -459,7 +465,7 @@ const JobManagement = () => {
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button 
+            <Button
               danger
               icon={<DeleteOutlined />}
             />
@@ -467,29 +473,41 @@ const JobManagement = () => {
         </Space>
       ),
     },
-  ];  return (
+  ]; return (
     <div className="page-wrapper">
       <Header />
       <div className="container">
         <Card className={styles.jobManagementCard}>
           <div className={styles.jobManagementHeader}>
             <Title level={2}>Quản lý việc làm</Title>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />} 
-              onClick={showAddModal}
-              className={styles.addJobBtn}
-            >
-              Thêm việc làm mới
-            </Button>
-          </div>          <Table
+            <div className={styles.headerButtons}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={showAddModal}
+                className={styles.addJobBtn}
+              >
+                Thêm việc làm mới
+              </Button>
+              <Button
+                type="primary"
+                icon={<FileSearchOutlined />}
+                onClick={() => setEvaluateModalVisible(true)}
+                className={styles.evaluateBtn}
+              >
+                Đánh giá CV phù hợp
+              </Button>
+            </div>
+          </div>
+          <Table
             columns={columns}
             dataSource={jobs}
             rowKey="id"
             loading={loading}
             pagination={false}
             className={styles.jobTable}
-          /></Card>
+          />
+        </Card>
       </div>
 
       {/* Modal thêm/sửa việc làm */}
@@ -568,9 +586,9 @@ const JobManagement = () => {
                 label="Thời hạn tuyển dụng"
                 rules={[{ required: true, message: "Vui lòng chọn thời hạn tuyển dụng" }]}
               >
-                <RangePicker 
-                  style={{ width: '100%' }} 
-                  format="DD/MM/YYYY" 
+                <RangePicker
+                  style={{ width: '100%' }}
+                  format="DD/MM/YYYY"
                   placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                 />
               </Form.Item>
@@ -621,22 +639,22 @@ const JobManagement = () => {
           >
             <TextArea rows={10} placeholder="Nhập mô tả công việc" />
           </Form.Item>          <Form.Item>            <div className={styles.formButtons}>
-              <Button onClick={() => setModalVisible(false)}>
-                Hủy
+            <Button onClick={() => setModalVisible(false)}>
+              Hủy
+            </Button>
+            {!isEditing && (
+              <Button
+                icon={<FileTextOutlined />}
+                onClick={loadInfoSecTemplate}
+                style={{ marginRight: 8 }}
+              >
+                Tải mẫu An toàn thông tin
               </Button>
-              {!isEditing && (
-                <Button 
-                  icon={<FileTextOutlined />} 
-                  onClick={loadInfoSecTemplate}
-                  style={{ marginRight: 8 }}
-                >
-                  Tải mẫu An toàn thông tin
-                </Button>
-              )}
-              <Button type="primary" htmlType="submit">
-                {isEditing ? "Cập nhật" : "Tạo mới"}
-              </Button>
-            </div>
+            )}
+            <Button type="primary" htmlType="submit">
+              {isEditing ? "Cập nhật" : "Tạo mới"}
+            </Button>
+          </div>
           </Form.Item>
         </Form>
       </Modal>
@@ -650,9 +668,9 @@ const JobManagement = () => {
           <Button key="close" onClick={() => setViewModalVisible(false)}>
             Đóng
           </Button>,
-          <Button 
-            key="edit" 
-            type="primary" 
+          <Button
+            key="edit"
+            type="primary"
             onClick={() => {
               setViewModalVisible(false);
               showEditModal(viewJob);
@@ -670,7 +688,7 @@ const JobManagement = () => {
         ) : viewJob && (
           <div className={styles.jobDetailView}>
             <Title level={3} className={styles.jobTitle}>{viewJob.title}</Title>
-            
+
             <Row gutter={[16, 16]} className={styles.jobInfoRow}>
               <Col xs={24} sm={12} md={8}>
                 <div className={styles.jobInfoItem}>
@@ -678,41 +696,41 @@ const JobManagement = () => {
                   <span>{viewJob.salary ? `${viewJob.salary.toLocaleString()} VND` : 'Thỏa thuận'}</span>
                 </div>
               </Col>
-              
+
               <Col xs={24} sm={12} md={8}>
                 <div className={styles.jobInfoItem}>
                   <ClockCircleOutlined style={{ fontSize: '16px', color: '#1890ff' }} />
                   <span>
-                    {viewJob.contract === 'FULL_TIME' ? 'Toàn thời gian' : 
-                     viewJob.contract === 'PART_TIME' ? 'Bán thời gian' : 
-                     viewJob.contract === 'FREELANCE' ? 'Freelance' : 'Kết hợp'}
+                    {viewJob.contract === 'FULL_TIME' ? 'Toàn thời gian' :
+                      viewJob.contract === 'PART_TIME' ? 'Bán thời gian' :
+                        viewJob.contract === 'FREELANCE' ? 'Freelance' : 'Kết hợp'}
                   </span>
                 </div>
               </Col>
-              
+
               <Col xs={24} sm={12} md={8}>
                 <div className={styles.jobInfoItem}>
                   <TeamOutlined style={{ fontSize: '16px', color: '#722ed1' }} />
                   <span>
-                    {viewJob.level === 'INTERN' ? 'Thực tập sinh' : 
-                     viewJob.level === 'FRESHER' ? 'Fresher' : 
-                     viewJob.level === 'JUNIOR' ? 'Junior' :
-                     viewJob.level === 'MIDDLE' ? 'Middle' : 
-                     viewJob.level === 'SENIOR' ? 'Senior' : 
-                     viewJob.level === 'LEADER' ? 'Trưởng nhóm' : 'Trưởng phòng'}
+                    {viewJob.level === 'INTERN' ? 'Thực tập sinh' :
+                      viewJob.level === 'FRESHER' ? 'Fresher' :
+                        viewJob.level === 'JUNIOR' ? 'Junior' :
+                          viewJob.level === 'MIDDLE' ? 'Middle' :
+                            viewJob.level === 'SENIOR' ? 'Senior' :
+                              viewJob.level === 'LEADER' ? 'Trưởng nhóm' : 'Trưởng phòng'}
                   </span>
                 </div>
               </Col>
-                <Col xs={24} sm={12} md={8}>
+              <Col xs={24} sm={12} md={8}>
                 <div className={styles.jobInfoItem}>
                   <EnvironmentOutlined style={{ fontSize: '16px', color: '#52c41a' }} />
                   <span>
-                    {viewJob.jobType === 'REMOTE' ? 'Làm việc từ xa' : 
-                     viewJob.jobType === 'IN_OFFICE' ? 'Làm việc tại văn phòng' : 'Kết hợp'}
+                    {viewJob.jobType === 'REMOTE' ? 'Làm việc từ xa' :
+                      viewJob.jobType === 'IN_OFFICE' ? 'Làm việc tại văn phòng' : 'Kết hợp'}
                   </span>
                 </div>
               </Col>
-              
+
               {viewJob.experienceYear && (
                 <Col xs={24} sm={12} md={8}>
                   <div className={styles.jobInfoItem}>
@@ -721,13 +739,13 @@ const JobManagement = () => {
                   </div>
                 </Col>
               )}
-              
+
               <Col xs={24} sm={12} md={8}>
                 <div className={styles.jobInfoItem}>
                   <CalendarOutlined style={{ fontSize: '16px', color: '#13c2c2' }} />
                   <span>
-                    {viewJob.startDate && viewJob.endDate 
-                      ? `${dayjs(viewJob.startDate).format("DD/MM/YYYY")} - ${dayjs(viewJob.endDate).format("DD/MM/YYYY")}` 
+                    {viewJob.startDate && viewJob.endDate
+                      ? `${dayjs(viewJob.startDate).format("DD/MM/YYYY")} - ${dayjs(viewJob.endDate).format("DD/MM/YYYY")}`
                       : 'Không xác định'}
                   </span>
                 </div>
@@ -737,19 +755,19 @@ const JobManagement = () => {
                 parseDescription(viewJob.description).length > 0 ? (
                   parseDescription(viewJob.description).map((section, index) => (
                     <div key={index} className={`${styles.descriptionBlock} ${styles[section.key + 'Section'] || ''}`}>                      <Title level={4} className={styles.sectionTitle}>
-                        <div className={styles.sectionTitleWithIcon}>
-                          {section.key === 'requirements' && <ExclamationCircleOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
-                          {section.key === 'benefits' && <CheckCircleOutlined style={{ fontSize: '20px', color: '#52c41a' }} />}
-                          {section.key === 'jobDescription' && <FileTextOutlined style={{ fontSize: '20px', color: '#205781' }} />}
-                          {section.key === 'education' && <TeamOutlined style={{ fontSize: '20px', color: '#2f54eb' }} />}
-                          {section.key === 'certification' && <TrophyOutlined style={{ fontSize: '20px', color: '#722ed1' }} />}
-                          {section.key === 'salary' && <DollarOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />}
-                          {!['requirements', 'benefits', 'jobDescription', 'education', 'certification', 'salary'].includes(section.key) && 
-                            <FileSearchOutlined style={{ fontSize: '20px', color: '#205781' }} />}
-                          <span className={styles.sectionTitleText}>{section.title}</span>
-                        </div>
-                      </Title>
-                      
+                      <div className={styles.sectionTitleWithIcon}>
+                        {section.key === 'requirements' && <ExclamationCircleOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+                        {section.key === 'benefits' && <CheckCircleOutlined style={{ fontSize: '20px', color: '#52c41a' }} />}
+                        {section.key === 'jobDescription' && <FileTextOutlined style={{ fontSize: '20px', color: '#205781' }} />}
+                        {section.key === 'education' && <TeamOutlined style={{ fontSize: '20px', color: '#2f54eb' }} />}
+                        {section.key === 'certification' && <TrophyOutlined style={{ fontSize: '20px', color: '#722ed1' }} />}
+                        {section.key === 'salary' && <DollarOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />}
+                        {!['requirements', 'benefits', 'jobDescription', 'education', 'certification', 'salary'].includes(section.key) &&
+                          <FileSearchOutlined style={{ fontSize: '20px', color: '#205781' }} />}
+                        <span className={styles.sectionTitleText}>{section.title}</span>
+                      </div>
+                    </Title>
+
                       {section.key === 'requirements' ? (
                         <div className={styles.requirementsList}>
                           {section.content.split('\n').filter(line => line.trim()).map((item, i) => (
@@ -790,22 +808,22 @@ const JobManagement = () => {
                 )
               )}
             </div>
-            
+
             <div className={styles.jobSkillsSection}>
               <Title level={4} className={styles.sectionTitle}>
                 <div className={styles.sectionTitleWithIcon}>
                   <ExperimentOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
                   <span className={styles.sectionTitleText}>Kỹ năng yêu cầu</span>
                 </div>
-              </Title>              
+              </Title>
               <div className={styles.skillTagsContainer}>
                 {viewJob.skills && Array.isArray(viewJob.skills) && viewJob.skills.length > 0 ? (
                   viewJob.skills.map((skill, index) => {
                     // Handle if skill is an object with id and name properties
                     if (typeof skill === 'object' && skill !== null && skill.name) {
                       return (
-                        <Tag 
-                          key={skill.id || index} 
+                        <Tag
+                          key={skill.id || index}
                           className={styles.skillTag}
                         >
                           {skill.name}
@@ -813,8 +831,8 @@ const JobManagement = () => {
                       );
                     }
                     return (
-                      <Tag 
-                        key={index} 
+                      <Tag
+                        key={index}
                         className={styles.skillTag}
                       >
                         {skill}
@@ -823,8 +841,8 @@ const JobManagement = () => {
                   })
                 ) : viewJob.skillNames && Array.isArray(viewJob.skillNames) && viewJob.skillNames.length > 0 ? (
                   viewJob.skillNames.map((skillName, index) => (
-                    <Tag 
-                      key={`name-${index}`} 
+                    <Tag
+                      key={`name-${index}`}
                       className={styles.skillTag}
                     >
                       {skillName}
@@ -844,6 +862,103 @@ const JobManagement = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Modal đánh giá CV phù hợp */}
+      <Modal
+        title={
+          <div className={styles.evaluateModalTitle}>
+            <FileSearchOutlined className={styles.evaluateModalIcon} />
+            <span>Đánh giá CV phù hợp</span>
+          </div>
+        }
+        open={evaluateModalVisible}
+        onCancel={() => setEvaluateModalVisible(false)}
+        footer={null}
+        width={700}
+        className={styles.evaluateModal}
+      >
+        <div className={styles.evaluateModalContent}>
+          <div className={styles.evaluateDescription}>
+            <Alert
+              message="Chọn vị trí tuyển dụng để đánh giá"
+              description="Hệ thống sẽ sử dụng thông tin từ vị trí tuyển dụng để đánh giá và xếp hạng các CV ứng viên phù hợp nhất."
+              type="info"
+              showIcon
+              className={styles.evaluateAlert}
+            />
+          </div>
+
+          <div className={styles.jobSelectionSection}>
+            <Title level={4}>Vị trí tuyển dụng</Title>
+            {loading ? (
+              <div className={styles.loadingContainer}>
+                <Spin />
+              </div>
+            ) : (
+              <Radio.Group
+                onChange={(e) => setSelectedEvaluationJob(e.target.value)}
+                value={selectedEvaluationJob}
+                className={styles.jobRadioGroup}
+              >
+                {jobs.map(job => (
+                  <Card
+                    key={job.id}
+                    className={`${styles.jobSelectionCard} ${selectedEvaluationJob === job.id ? styles.selectedJobCard : ''}`}
+                    hoverable
+                  >
+                    <Radio value={job.id} className={styles.jobRadio}>
+                      <div className={styles.jobSelectionInfo}>
+                        <div className={styles.jobSelectionTitle}>{job.title}</div>
+                        <div className={styles.jobSelectionMeta}>
+                          <Tag color="blue">
+                            {contractOptions.find(opt => opt.value === job.contract)?.label || job.contract}
+                          </Tag>
+                          <Tag color="green">
+                            {levelOptions.find(opt => opt.value === job.level)?.label || job.level}
+                          </Tag>
+                          {job.skills && Array.isArray(job.skills) && job.skills.length > 0 && (
+                            <div className={styles.jobSelectionSkills}>
+                              {job.skills.slice(0, 2).map((skill, index) => (
+                                <Tag
+                                  key={index}
+                                  className={styles.skillTag}
+                                  color="purple"
+                                >
+                                  {typeof skill === 'object' ? skill.name : skill}
+                                </Tag>
+                              ))}
+                              {job.skills.length > 2 && (
+                                <Tag className={styles.moreSkillsTag}>+{job.skills.length - 2}</Tag>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Radio>
+                  </Card>
+                ))}
+              </Radio.Group>
+            )}
+          </div>
+
+          <div className={styles.evaluateButtonContainer}>
+            <Button onClick={() => setEvaluateModalVisible(false)}>
+              Hủy
+            </Button>
+            <Button
+              type="primary"
+              icon={<FileSearchOutlined />}
+              disabled={!selectedEvaluationJob}
+              onClick={() => {
+                setEvaluateModalVisible(false);
+                navigate(`/hr/cv-evaluate/${selectedEvaluationJob}`, { state: { job: jobs.find(job => job.id === selectedEvaluationJob) } });
+              }}
+            >
+              Bắt đầu đánh giá
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

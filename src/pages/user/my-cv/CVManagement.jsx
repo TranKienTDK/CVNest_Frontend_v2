@@ -22,7 +22,7 @@ import sampleDataCV4 from "./components/CVTemplate/sampleDataCV4";
 import TemplateCV2 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV2";
 import TemplateCV3 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV3";
 import TemplateCV4 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV4";
-import {Modal} from "antd";
+import { Modal } from "antd";
 
 function CVManagement() {
   const [cvs, setCv] = useState([]);
@@ -153,14 +153,27 @@ function CVManagement() {
         name: cvData.cvName || "Untitled CV",
         templateId: cvData.templateId || 1,
         profile: cvData.profile || "",
-        info: cvData.info || {},
+        personalInfo: {
+          fullname: cvData.info?.fullName || cvData.fullName || "",
+          email: cvData.info?.email || cvData.email || "",
+          phone: cvData.info?.phone || cvData.phone || "",
+          address: cvData.info?.address || cvData.address || "",
+          linkedin: cvData.info?.linkedin || cvData.linkedin || "",
+          github: cvData.info?.github || cvData.github || "",
+          website: cvData.info?.website || cvData.website || "",
+          position: cvData.info?.position || cvData.position || "",
+          city: cvData.info?.city || cvData.city || "",
+          avatar: cvData.info?.avatar || cvData.avatar || "",
+          dob: cvData.info?.dob || cvData.dob || "",
+          gender: cvData.info?.gender || cvData.gender || "",
+        },
         experiences: cvData.experiences || [],
         skills: (cvData.skills || []).map((skill) => ({
           id: skill.id,
           name: skill.name || skill.skill || "",
           rate: typeof skill.rate === "number" ? skill.rate : 0,
         })),
-        educations: cvData.educations || [],
+        education: cvData.educations || [],
         languages: cvData.languages || [],
         projects: cvData.projects || [],
         certificates: cvData.certificates || [],
@@ -210,6 +223,10 @@ function CVManagement() {
             <Link
               to={ROUTES.CREATENAMECV}
               className="flex items-center bg-[#D83B01] text-white font-semibold px-4 py-2 rounded-md hover:bg-[#b43000]"
+              onClick={() => {
+                // Clear any existing CV draft data when creating a new CV
+                localStorage.removeItem('cv_draft');
+              }}
             >
               Tạo CV mới
               <svg
@@ -259,23 +276,23 @@ function CVManagement() {
                 <div className="text-gray-700 px-4">
                   {cv.updatedAt
                     ? new Date(cv.updatedAt).toLocaleString("vi-VN", {
-                        hour12: false,
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                      })
+                      hour12: false,
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })
                     : new Date(cv.createdAt).toLocaleString("vi-VN", {
-                        hour12: false,
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                      })}
+                      hour12: false,
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
                 </div>
 
                 {/* Tuỳ chọn */}

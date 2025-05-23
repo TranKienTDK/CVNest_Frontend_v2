@@ -118,6 +118,7 @@ const schema = z.object({
 // Tạo Provider
 export const CreateCVProvider = ({children, initialData}) => {
     const isFirstRender = React.useRef(true);
+    const [validationIssues, setValidationIssues] = useState([]);
 
     const formCreate = useForm({
         resolver: zodResolver(schema),
@@ -175,7 +176,7 @@ export const CreateCVProvider = ({children, initialData}) => {
                     field: edu.field || edu.degree || "",
                     startDate: edu.startDate ? dayjs(edu.startDate) : null,
                     endDate: edu.endDate ? dayjs(edu.endDate) : null,
-                    isCurrent: !edu.endDate,
+                    isCurrent: edu.endDate ? false : true,
                     description: edu.description || ""
                 }))
                 : [{...itemDefaultEducation, id: v4()}],
@@ -302,6 +303,65 @@ export const CreateCVProvider = ({children, initialData}) => {
     
     const [listDetailInfoShowing, setListDetailInfoShowing] = useState(initialShowingItems);
 
+    // Monitor form errors and update validationIssues state
+    useEffect(() => {
+        const subscription = formCreate.watch(() => {
+            // Get current errors
+            const currentErrors = formCreate.formState.errors;
+            
+            // If there are errors, log them to console and update state
+            if (Object.keys(currentErrors).length > 0) {
+                const errorList = [];
+                
+                // Convert the nested error object to a flat array for easier display
+                const processErrors = (errors, path = '') => {
+                    Object.entries(errors).forEach(([key, value]) => {
+                        const currentPath = path ? `${path}.${key}` : key;
+                        
+                        if (value.message) {
+                            errorList.push({
+                                path: currentPath,
+                                message: value.message
+                            });
+                        }
+                        
+                        // Handle array errors
+                        if (value.type === "array" && value.message) {
+                            errorList.push({
+                                path: currentPath,
+                                message: value.message
+                            });
+                        }
+                        
+                        // Handle nested objects and arrays with errors
+                        if (typeof value === 'object' && !value.message) {
+                            if (Array.isArray(value)) {
+                                value.forEach((item, index) => {
+                                    if (item && typeof item === 'object') {
+                                        processErrors(item, `${currentPath}[${index}]`);
+                                    }
+                                });
+                            } else {
+                                processErrors(value, currentPath);
+                            }
+                        }
+                    });
+                };
+                
+                processErrors(currentErrors);
+                
+                // Log validation issues to console
+                console.log("Schema Validation Issues:", errorList);
+                setValidationIssues(errorList);
+            } else {
+                setValidationIssues([]);
+            }
+        });
+        
+        // Cleanup subscription
+        return () => subscription.unsubscribe();
+    }, [formCreate]);
+
     // Update form values when initialData changes (for update CV scenario)
     useEffect(() => {
         // Skip the first render as the form is already initialized with defaultValues
@@ -366,7 +426,7 @@ export const CreateCVProvider = ({children, initialData}) => {
                         field: edu.field || edu.degree || "",
                         startDate: edu.startDate ? dayjs(edu.startDate) : null,
                         endDate: edu.endDate ? dayjs(edu.endDate) : null,
-                        isCurrent: !edu.endDate,
+                        isCurrent: edu.endDate ? false : true,
                         description: edu.description || ""
                     }))
                     : [{...itemDefaultEducation, id: v4()}],
@@ -450,7 +510,7 @@ export const CreateCVProvider = ({children, initialData}) => {
 
     const value = {
         formCreate,
-
+        validationIssues,
         listDetailInfo, setListDetailInfo,
         listDetailInfoShowing, setListDetailInfoShowing
     }

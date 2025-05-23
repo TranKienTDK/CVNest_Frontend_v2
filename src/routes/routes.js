@@ -14,4 +14,5 @@ export const ROUTES = {
     HR_APPLICATION_DETAIL: "/hr/applications/:id",
     HR_JOBS: "/hr/jobs",
     HR_JOB_DETAIL: "/hr/jobs/:id",
+    CV_EVALUATE: "/hr/cv-evaluate/:jobId",
 };

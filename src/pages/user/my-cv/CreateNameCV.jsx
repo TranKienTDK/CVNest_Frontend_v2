@@ -19,31 +19,10 @@ function CreateNameCV() {
   const [form, setForm] = useState({ name: "", templateId: "" });
   const [errors, setErrors] = useState({});
   const [previewImage, setPreviewImage] = useState(null); 
-  const navigate = useNavigate();
-  useEffect(() => {
-    const savedDraft = localStorage.getItem('cv_draft');
-    if (savedDraft) {
-      try {
-        const parsedDraft = JSON.parse(savedDraft);
-        if (parsedDraft.templateId) {
-          const templateId = typeof parsedDraft.templateId === 'string' 
-            ? parseInt(parsedDraft.templateId, 10) 
-            : parsedDraft.templateId;
-          
-          setForm(prev => ({ 
-            ...prev, 
-            templateId: templateId,
-            name: parsedDraft.name || prev.name
-          }));
-          
-          if (!parsedDraft.name) {
-            localStorage.removeItem('cv_draft');
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing saved draft:", error);
-      }
-    }
+  const navigate = useNavigate();  useEffect(() => {
+    // We don't want to load from localStorage when creating a new CV
+    // This ensures we always start with a fresh form
+    setForm({ name: "", templateId: "" });
   }, []);
 
   const validateForm = () => {

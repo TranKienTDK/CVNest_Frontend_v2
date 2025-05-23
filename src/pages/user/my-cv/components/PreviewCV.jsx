@@ -68,7 +68,6 @@ export default function PreviewCV({
   const [previewData, setPreviewData] = useState(null);
   const [previewId, setPreviewId] = useState(null);
   const draft = localStorage.getItem("cv_draft");
-  console.log("Draft from localStorage:", draft ? JSON.parse(draft) : null);
 
   useEffect(() => {
     if (cvData) {
