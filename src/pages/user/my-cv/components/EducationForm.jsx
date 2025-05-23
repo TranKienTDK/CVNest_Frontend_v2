@@ -1,5 +1,5 @@
 import styles from "@/pages/user/my-cv/style.module.css"
-import React from "react";
+import React, {useEffect} from "react";
 import {Controller, useFieldArray} from "react-hook-form";
 import {Checkbox, DatePicker, Divider, Input, Space} from "antd";
 import {useCreateCV} from "@/pages/user/my-cv/contexts/CreateCVContext";
@@ -17,6 +17,7 @@ export default function EducationForm() {
     const {
         control,
         watch,
+        setValue,
         formState: {errors},
     } = formCreate;
 
@@ -24,6 +25,19 @@ export default function EducationForm() {
         control,
         name: "educations",
     });
+
+    useEffect(() => {
+        if (fields.length > 0) {
+            setValue("educations.0.isCurrent", false, {shouldValidate: false});
+        }
+    }, []);
+
+    const addNewEducation = () => {
+        append({
+            ...itemDefaultEducation,
+            isCurrent: false
+        });
+    };
 
     return (
         <>
@@ -54,8 +68,7 @@ export default function EducationForm() {
                         <div className={cn(styles.formGroup)}>
                             <label className={cn(styles.formLabel)}>
                                 Tên trường cơ sở đào tạo chính quy
-                                <span
-                                    className="text-red-500">(*)</span>
+                                <span className="text-red-500">(*)</span>
                             </label>
                             <div className="grow">
                                 <Controller
@@ -77,8 +90,7 @@ export default function EducationForm() {
                         <div className={cn(styles.formGroup)}>
                             <label className={cn(styles.formLabel)}>
                                 Thời gian học tập
-                                <span
-                                    className="text-red-500">(*)</span>
+                                <span className="text-red-500">(*)</span>
                             </label>
                             <div className={cn("grow")}>
                                 <Space>
@@ -88,7 +100,7 @@ export default function EducationForm() {
                                         render={({field}) => (
                                             <DatePicker
                                                 picker="month"
-                                                value={field.value ? dayjs(field.value) : null} // 👈 chuyển về đúng dạng
+                                                value={field.value ? dayjs(field.value) : null}
                                                 onChange={(date) => field.onChange(date)}
                                                 placeholder="Từ"
                                             />
@@ -126,8 +138,7 @@ export default function EducationForm() {
                         <div className={cn(styles.formGroup)}>
                             <label className={cn(styles.formLabel)}>
                                 Ngành học
-                                <span
-                                    className="text-red-500">(*)</span>
+                                <span className="text-red-500">(*)</span>
                             </label>
                             <div className={cn("grow")}>
                                 <Controller
@@ -189,7 +200,7 @@ export default function EducationForm() {
                 <div className={cn("flex justify-end mt-3")}>
                     <button
                         className={cn("bg-[#a1a1a1] text-white flex justify-center items-center gap-1 py-1 px-2 hover:opacity-80 text-sm")}
-                        onClick={() => append({...itemDefaultEducation})} // Removed id: v4() to let backend handle new items
+                        onClick={addNewEducation}
                         type="button"
                     >
                         Thêm học vấn khác

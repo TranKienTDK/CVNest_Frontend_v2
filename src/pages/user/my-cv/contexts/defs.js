@@ -14,6 +14,7 @@ export const itemDefaultEducation = {
     school: "",
     startDate: null,
     endDate: null,
+    isCurrent: false,
     field: "",
     description: ""
 };

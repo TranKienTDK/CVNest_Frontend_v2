@@ -22,8 +22,22 @@
   flex-wrap: wrap;
 }
 
-.addJobBtn {
-  margin-left: auto;
+.jobManagementHeader > :first-child {
+  margin-right: auto;
+}
+
+.jobManagementHeader > :not(:first-child) {
+  margin-left: 12px;
+}
+
+.evaluateBtn {
+  background-color: #13c2c2;
+  border-color: #13c2c2;
+}
+
+.evaluateBtn:hover {
+  background-color: #08979c;
+  border-color: #08979c;
 }
 
 .jobTable {
@@ -394,6 +408,109 @@
   height: 200px;
 }
 
+/* Evaluate Modal Styles */
+.evaluateModalTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.evaluateModalIcon {
+  font-size: 20px;
+  color: #13c2c2;
+}
+
+.evaluateModalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.evaluateDescription {
+  margin-bottom: 8px;
+}
+
+.evaluateAlert {
+  border-radius: 8px;
+}
+
+.jobSelectionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jobRadioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.jobSelectionCard {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.selectedJobCard {
+  border-color: #13c2c2;
+  background-color: #e6fffb;
+  box-shadow: 0 0 0 2px rgba(19, 194, 194, 0.2);
+}
+
+.jobRadio {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+
+.jobSelectionInfo {
+  margin-left: 8px;
+  width: 100%;
+}
+
+.jobSelectionTitle {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.jobSelectionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.jobSelectionSkills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.moreSkillsTag {
+  background-color: #f0f0f0;
+  color: #595959;
+}
+
+.evaluateButtonContainer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.headerButtons {
+  display: flex;
+  gap: 12px;
+}
+
 @media (max-width: 768px) {
   .job-management-header {
     flex-direction: column;
@@ -401,7 +518,12 @@
     gap: 16px;
   }
   
-  .add-job-btn {
-    margin-left: 0;
+  .headerButtons {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .headerButtons button {
+    flex: 1;
   }
 }
