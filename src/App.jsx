@@ -11,6 +11,7 @@ import JobPage from "./pages/job/JobPage";
 import CompanyDetail from "./pages/company/CompanyDetail";
 import CreateCVPage from "@/pages/user/my-cv/CreateCVPage.jsx";
 import UpdateCVPage from "@/pages/user/my-cv/UpdateCVPage.jsx";
+import UserProfile from "@/pages/user/profile/UserProfile.jsx";
 
 // import các plugin bạn dùng (chỉ dùng miễn phí)
 import 'tinymce/plugins/link';
@@ -50,6 +51,7 @@ function App() {
                         <Route path="update/:id" element={<UpdateCVPage/>}/>
                         <Route path="view-document" element={<ViewCVDocument/>}/>
                     </Route>
+                    <Route path="profile" element={<UserProfile />} />
                     <Route path="applications" element={<ApplicationsManagement />} />
                 </Route>
                 

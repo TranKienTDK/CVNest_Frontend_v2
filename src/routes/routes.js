@@ -5,6 +5,7 @@ export const ROUTES = {
     CREATECVPAGE: "/user/my-cv/create",
     DETAILCV: "/user/my-cv/update/:id",
     UPDATECVPAGE: "/user/my-cv/update/:id",
+    PROFILE: "/user/profile",
     COMPANIES: "/companies",
     COMPANY_DETAIL: "/companies/:id",
     JOBS: "/jobs",

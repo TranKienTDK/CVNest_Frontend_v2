@@ -1,0 +1,155 @@
+.avatar-container {
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar-container:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.avatar-upload-label {
+  transition: all 0.3s ease;
+  opacity: 0.9;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-upload-label:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.tab-button {
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.tab-button:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #D83B01;
+  transition: width 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.tab-button:hover:after {
+  width: 100%;
+}
+
+.tab-button.active:after {
+  width: 100%;
+}
+
+.tab-button:hover {
+  color: #D83B01;
+}
+
+.form-group {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.form-group:focus-within {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background-color: rgba(216, 59, 1, 0.03);
+}
+
+.form-input {
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: #D83B01;
+  box-shadow: 0 0 0 2px rgba(216, 59, 1, 0.2);
+}
+
+.save-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(216, 59, 1, 0.1), 0 2px 4px -1px rgba(216, 59, 1, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.save-button:hover {
+  box-shadow: 0 10px 15px -3px rgba(216, 59, 1, 0.2), 0 4px 6px -2px rgba(216, 59, 1, 0.1);
+  transform: translateY(-2px);
+}
+
+.save-button:active {
+  transform: translateY(0);
+  box-shadow: 0 5px 10px -3px rgba(216, 59, 1, 0.2);
+}
+
+.profile-card {
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.spinner {
+  border-color: white transparent white transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.profile-section {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.password-section {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+  }
+}

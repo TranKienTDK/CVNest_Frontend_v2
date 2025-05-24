@@ -205,14 +205,14 @@ export default function Header({ className }) {
 
   // HR menu items
   const hrMenuItems = [
-    { icon: UserCog, title: "Quản lý thông tin cá nhân", link: "/profile" },
-    { icon: ClipboardList, title: "Quản lý tin tuyển dụng", link: "/hr/jobs" },
+    { icon: UserCog, title: "Quản lý thông tin cá nhân", link: ROUTES.PROFILE },
+    { icon: ClipboardList, title: "Quản lý tin tuyển dụng", link: ROUTES.HR_JOBS },
     { icon: FileText, title: "Quản lý CV ứng tuyển", link: ROUTES.HR_APPLICATIONS },
   ]
 
   // User menu items
   const userMenuItems = [
-    { icon: UserCog, title: "Quản lý thông tin cá nhân", link: "/profile" },
+    { icon: UserCog, title: "Quản lý thông tin cá nhân", link: ROUTES.PROFILE },
     { icon: FileText, title: "Quản lý CV", link: ROUTES.CVMANAGEMENT },
     { icon: ClipboardList, title: "Quản lý CV ứng tuyển", link: ROUTES.APPLICATIONS },
   ]
@@ -430,8 +430,18 @@ export default function Header({ className }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 rounded-full">
-                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center overflow-hidden">
-                      {userData?.username?.charAt(0) || <User className="h-4 w-4" />}
+                    <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                      {userData?.avatar ? (
+                        <img 
+                          src={userData.avatar} 
+                          alt={userData?.username || "User"} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-primary text-white flex items-center justify-center">
+                          {userData?.username?.charAt(0) || <User className="h-4 w-4" />}
+                        </div>
+                      )}
                     </div>
                     <span className="hidden sm:block max-w-[150px] truncate">{userData?.username || "User"}</span>
                     <ChevronDown className="h-4 w-4" />
@@ -439,9 +449,32 @@ export default function Header({ className }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex flex-col space-y-1 p-2">
-                    <p className="text-sm font-medium">{userData?.username || "User"}</p>
-                    <p className="text-xs text-muted-foreground">{userData?.email || ""}</p>
-                    <p className="text-xs font-semibold text-primary">{userRole || ""}</p>
+                    <div className="flex gap-3 items-center">
+                      <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                        {userData?.avatar ? (
+                          <img 
+                            src={userData.avatar} 
+                            alt={userData?.username || "User"} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-primary text-white flex items-center justify-center">
+                            {userData?.username?.charAt(0) || <User className="h-5 w-5" />}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{userData?.username || "User"}</p>
+                        <p className="text-xs text-muted-foreground">{userData?.email || ""}</p>
+                      </div>
+                    </div>
+                    {userData?.phone && (
+                      <div className="flex items-center gap-1 text-xs text-gray-600 mt-1 pl-1">
+                        <Phone className="h-3 w-3" />
+                        <span>{userData.phone}</span>
+                      </div>
+                    )}
+                    <p className="text-xs font-semibold text-primary pl-1">{userRole || ""}</p>
                   </div>
                   <DropdownMenuSeparator />
                   
@@ -500,12 +533,28 @@ export default function Header({ className }) {
                 {/* Mobile user info (if authenticated) */}
                 {authenticated && (
                   <div className="flex items-center gap-3 p-2 border-b pb-4">
-                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
-                      {userData?.username?.charAt(0) || <User className="h-5 w-5" />}
+                    <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                      {userData?.avatar ? (
+                        <img 
+                          src={userData.avatar} 
+                          alt={userData?.username || "User"} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-primary text-white flex items-center justify-center">
+                          {userData?.username?.charAt(0) || <User className="h-5 w-5" />}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="font-medium">{userData?.username || "User"}</p>
                       <p className="text-xs text-muted-foreground">{userData?.email}</p>
+                      {userData?.phone && (
+                        <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                          <Phone className="h-3 w-3" />
+                          <span>{userData.phone}</span>
+                        </p>
+                      )}
                       <p className="text-xs font-medium text-primary">{userRole}</p>
                     </div>
                   </div>
