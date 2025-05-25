@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -8,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import logo from "../../../assets/CVNest_logo.jpg";
 import { saveAccessToken, saveUserData } from "../../../helper/storage";
 import auth from "../../../api/auth";
+import { ROUTES } from "@/routes/routes";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -51,7 +51,12 @@ const Login = () => {
         autoClose: 2000,
       });
 
-      navigate("/");
+      // Redirect based on user role
+      if (user?.role === "HR") {
+        navigate(ROUTES.HR_HOME);
+      } else {
+        navigate(ROUTES.HOME);
+      }
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       setErrors({ ...errors, general: errorMessage });

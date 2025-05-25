@@ -6,7 +6,9 @@ import VerifyForgotPassword from "./pages/auth/forgot_password/VerifyForgotPassw
 import ResetPassword from "./pages/auth/forgot_password/ResetPassword";
 import CompanyPage from "./pages/company/Companypage";
 import {ToastContainer} from "react-toastify";
-import Homepage from "./pages/homepage/Homepage";
+import UserHomepage from "./pages/homepage/UserHomepage";
+import HomeRouter from "./pages/homepage/HomeRouter";
+import HRHomepage from "./pages/homepage/HRHomepage";
 import JobPage from "./pages/job/JobPage";
 import CompanyDetail from "./pages/company/CompanyDetail";
 import CreateCVPage from "@/pages/user/my-cv/CreateCVPage.jsx";
@@ -37,7 +39,9 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPassword/>}/>
                 <Route path="/verify-code" element={<VerifyForgotPassword/>}/>
                 <Route path="/reset-password" element={<ResetPassword/>}/>
-                <Route path="/" element={<Homepage/>}/>
+                <Route path="/" element={<HomeRouter/>}/>
+                <Route path="/user-home" element={<UserHomepage/>}/>
+                <Route path="/hr-home" element={<HRHomepage/>}/>
                 <Route path="/companies" element={<CompanyPage/>}/>
                 <Route path="/companies/:id" element={<CompanyDetail/>}/>
                 <Route path="/jobs" element={<JobPage/>}/>

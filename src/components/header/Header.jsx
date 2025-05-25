@@ -194,12 +194,12 @@ export default function Header({ className }) {
         position: "top-right",
         autoClose: 2000,
       })
-      navigate("/")
+      navigate(ROUTES.HOME)
     } catch (error) {
       console.error("Logout error:", error)
       websocketService.disconnect();
       clearAuthData()
-      navigate("/")
+      navigate(ROUTES.HOME)
     }
   }
 
@@ -253,7 +253,7 @@ export default function Header({ className }) {
       <div className="container mx-auto flex h-[var(--header-height)] items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-2 font-bold text-xl">
-          <Link to="/">
+          <Link to={isHR ? ROUTES.HR_HOME : ROUTES.HOME}>
             <img src={logo || "/placeholder.svg"} className="h-12 w-12" alt="CVNest" />
           </Link>
         </div>
@@ -519,10 +519,11 @@ export default function Header({ className }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[350px]">
-              <div className="flex flex-col gap-6 py-4">
-                <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-6 py-4">                  <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold text-xl">
-                    <img src={logo || "/placeholder.svg"} className="h-8 w-8" alt="CVNest" />
+                    <Link to={isHR ? ROUTES.HR_HOME : ROUTES.HOME}>
+                      <img src={logo || "/placeholder.svg"} className="h-8 w-8" alt="CVNest" />
+                    </Link>
                     <span>CVNest</span>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>

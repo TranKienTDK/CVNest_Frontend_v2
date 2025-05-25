@@ -1,5 +1,7 @@
 export const ROUTES = {
     HOME: "/",
+    USER_HOME: "/user-home",
+    HR_HOME: "/hr-home",
     CVMANAGEMENT: "/user/my-cv",
     CREATENAMECV: "/user/my-cv/template",
     CREATECVPAGE: "/user/my-cv/create",
@@ -16,4 +18,7 @@ export const ROUTES = {
     HR_JOBS: "/hr/jobs",
     HR_JOB_DETAIL: "/hr/jobs/:id",
     CV_EVALUATE: "/hr/cv-evaluate/:jobId",
+    JOBMANAGEMENT: "/hr/jobs",
+    APPLICATIONSMANAGEMENT: "/hr/applications",
+    CVMATCHING: "/hr/cv-evaluate",
 };
