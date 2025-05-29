@@ -28,6 +28,8 @@ const JobPage = () => {
   const [page, setPage] = useState(1);
   const [size] = useState(9);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,58 +45,39 @@ const JobPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchData = async () => {
       try {
-        const response = await jobAPI.getAllJobs(page - 1, size);
-        setJobs(response.data.data.content);
-        setTotalJobs(response.data.data.page.totalElements);
+        if (isSearchActive) {
+          const response = await jobAPI.searchJobs(
+            title,
+            contract,
+            jobType,
+            level,
+            experienceYear,
+            salaryRange,
+            skillIds,
+            page - 1,
+            size
+          );
+          setJobs(response.data.data.content);
+          setTotalJobs(response.data.data.page.totalElements);
+        } else {
+          const response = await jobAPI.getAllJobs(page - 1, size);
+          setJobs(response.data.data.content);
+          setTotalJobs(response.data.data.page.totalElements);
+        }
       } catch (error) {
         console.error("Error fetching jobs:", error);
       }
     };
 
-    fetchJobs();
-  }, []);
-
-  const searchJobs = async () => {
-    try {
-      const response = await jobAPI.searchJobs(
-        title,
-        contract,
-        jobType,
-        level,
-        experienceYear,
-        salaryRange,
-        skillIds,
-        page - 1,
-        size
-      );
-      setJobs(response.data.data.content);
-      setTotalJobs(response.data.data.page.totalElements);
-    } catch (error) {
-      console.error("Error searching jobs:", error);
-    }
-  };
+    fetchData();
+  }, [page, size, isSearchActive, searchTrigger, title, contract, jobType, level, experienceYear, salaryRange, skillIds]);
 
   const handleSearch = async () => {
     setPage(1);
-    try {
-      const response = await jobAPI.searchJobs(
-        title,
-        contract,
-        jobType,
-        level,
-        experienceYear,
-        salaryRange,
-        skillIds,
-        0, // Đặt lại trang về 0
-        size
-      );
-      setJobs(response.data.data.content);
-      setTotalJobs(response.data.data.page.totalElements);
-    } catch (error) {
-      console.error("Error searching jobs:", error);
-    }
+    setIsSearchActive(true);
+    setSearchTrigger(prev => prev + 1);
   };
 
   const handleClearSearch = async () => {
@@ -106,19 +89,11 @@ const JobPage = () => {
     setSalaryRange(undefined);
     setSkillIds([]);
     setPage(1);
-    
-    try {
-      const response = await jobAPI.getAllJobs(0, size);
-      setJobs(response.data.data.content);
-      setTotalJobs(response.data.data.page.totalElements);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-    }
+    setIsSearchActive(false);
   };
 
-  const handlePageChange = (page) => {
-    setPage(page);
-    searchJobs();
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
   };
 
   const handleJobClick = (jobId) => {
@@ -184,7 +159,7 @@ const JobPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="INTERN">Intern</SelectItem>
-                <SelectItem value="FRESHHER">Fresher</SelectItem>
+                <SelectItem value="FRESHER">Fresher</SelectItem>
                 <SelectItem value="MIDDLE">Middle</SelectItem>
                 <SelectItem value="JUNIOR">Junior</SelectItem>
                 <SelectItem value="SENIOR">Senior</SelectItem>

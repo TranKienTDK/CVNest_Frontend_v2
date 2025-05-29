@@ -23,70 +23,54 @@ const CompanyPage = () => {
   const [address, setAddress] = useState(undefined);
   const [industry, setIndustry] = useState(undefined);
   const [page, setPage] = useState(1);
-  // const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [size] = useState(9);
-  // const [isSearching, setIsSearching] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCompanies = async () => {
+    const fetchData = async () => {
       try {
-        const response = await companyAPI.getAllCompanies(0, size);
-        setCompanies(response.data.data.content);
-        setTotalElements(response.data.data.page.totalElements);
+        if (isSearchActive) {
+          const response = await companyAPI.searchCompanies(
+            search,
+            address,
+            industry,
+            page - 1,
+            size
+          );
+          setCompanies(response.data.data.content);
+          setTotalElements(response.data.data.page.totalElements);
+        } else {
+          const response = await companyAPI.getAllCompanies(page - 1, size);
+          setCompanies(response.data.data.content);
+          setTotalElements(response.data.data.page.totalElements);
+        }
       } catch (error) {
         console.error("Error fetching companies:", error);
       }
     };
-    fetchCompanies();
-  }, [size]);
 
-  const searchCompanies = async () => {
-    try {
-      const response = await companyAPI.searchCompanies(
-        search,
-        address,
-        industry,
-        page - 1,
-        size
-      );
-      setCompanies(response.data.data.content);
-      // setTotalPages(response.data.data.page.totalPages);
-      setTotalElements(response.data.data.page.totalElements);
-    } catch (error) {
-      console.error("Error searching companies:", error);
-    }
-  };
+    fetchData();
+  }, [page, size, isSearchActive, searchTrigger, search, address, industry]);
 
   const handleCompanyClick = (id) => {
     navigate(`/companies/${id}`);
   };
 
-  const handleSearch = async () => {
-    try {
-      const response = await companyAPI.searchCompanies(
-        search,
-        address,
-        industry,
-        page - 1,
-        size
-      );
-      setCompanies(response.data.data.content);
-      // setTotalPages(response.data.data.page.totalPages);
-      setTotalElements(response.data.data.page.totalElements);
-    } catch (error) {
-      console.error("Error searching companies:", error);
-    }
+  const handleSearch = () => {
     setPage(1);
+    setIsSearchActive(true);
+    setSearchTrigger(prev => prev + 1);
   };
 
   const handleClearSearch = () => {
     setSearch("");
-    setAddress(null);
-    setIndustry(null);
+    setAddress(undefined);
+    setIndustry(undefined);
     setPage(1);
-    searchCompanies();
+    setIsSearchActive(false);
   };
 
   return (
@@ -238,9 +222,8 @@ const CompanyPage = () => {
             current={page}
             total={totalElements}
             pageSize={size}
-            onChange={(page) => {
-              setPage(page);
-              searchCompanies();
+            onChange={(newPage) => {
+              setPage(newPage);
             }}
             showSizeChanger={false}
             showQuickJumper
