@@ -9,7 +9,7 @@ const HeroSection = ({
   description = "Create a professional CV in minutes with our easy-to-use builder and connect with thousands of employers looking for talent like you.",
   createCVButtonText = "Create Your CV",
   findJobsButtonText = "Find Jobs",
-  backgroundImage = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80",
+  backgroundImage = "https://img-cdn.inc.com/image/upload/f_webp,q_auto,c_fit/images/panoramic/GettyImages-1374879082_530288_ktipyy.jpg",
   isHR = false,
   onCreateCVClick,
   onFindJobsClick,
@@ -21,9 +21,14 @@ const HeroSection = ({
           {/* Background image with overlay */}
           <div className="absolute inset-0 z-0">
             <div
-              className="absolute inset-0 bg-cover bg-center"
+              className="absolute inset-0 bg-cover bg-center z-10"
               style={{ backgroundImage: `url(${backgroundImage})` }}
             />
+            
+            {/* Black overlay for left and right edges */}
+            <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black to-transparent z-20"></div>
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-black to-transparent z-20"></div>
+            
             <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/40" />
           </div>
 
