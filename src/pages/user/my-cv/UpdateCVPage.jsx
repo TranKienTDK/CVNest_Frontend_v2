@@ -375,7 +375,7 @@ function UpdateCVPage() {
 
       toast.success("Cập nhật CV thành công!");
 
-      navigate(ROUTES.CV_MANAGEMENT);
+      navigate(ROUTES.CVMANAGEMENT);
     } catch (error) {
       console.error("Error updating CV:", error);
       toast.error("Cập nhật CV thất bại. Vui lòng thử lại!");

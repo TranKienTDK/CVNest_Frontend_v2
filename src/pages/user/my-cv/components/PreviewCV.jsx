@@ -129,9 +129,9 @@ export default function PreviewCV({
                     case 2:
                       return <TemplateCV2 data={dataToUse} />;
                     case 3:
-                      return <TemplateCV3 data={sampleDataCV4} />;
+                      return <TemplateCV3 data={dataToUse} />;
                     case 4:
-                      return <TemplateCV4 data={sampleDataCV4} />;
+                      return <TemplateCV4 data={dataToUse} />;
                     default:
                       return <TemplateCV1 data={dataToUse} />;
                   }
@@ -148,9 +148,9 @@ export default function PreviewCV({
                   case 2:
                     return <TemplateCV2 data={dataToUse} />;
                   case 3:
-                    return <TemplateCV3 data={sampleDataCV4} />;
+                    return <TemplateCV3 data={dataToUse} />;
                   case 4:
-                    return <TemplateCV4 data={sampleDataCV4} />;
+                    return <TemplateCV4 data={dataToUse} />;
                   default:
                     return <TemplateCV1 data={dataToUse} />;
                 }

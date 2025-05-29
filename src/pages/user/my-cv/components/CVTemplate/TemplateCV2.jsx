@@ -218,7 +218,9 @@ export const TemplateCV2 = ({ data = {} }) => {
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Icon path={paths.location} />
                   <Text style={{ fontSize: 10 }}>
-                    {data.personalInfo.address}
+                    {data.personalInfo.address && data.personalInfo.city
+                      ? `${data.personalInfo.address}, ${data.personalInfo.city}`
+                      : data.personalInfo.address || data.personalInfo.city}
                   </Text>
                 </View>
               )}

@@ -142,7 +142,9 @@ export const TemplateCV1 = ({data = {}}) => {
                             }}>
                                 <Icon path={paths.location}/>
                                 <Text x={0} y={0} style={{fontSize: 10}}>
-                                    {data.personalInfo?.address || "Address"}
+                                    {data.personalInfo.address && data.personalInfo.city
+                                        ? `${data.personalInfo.address}, ${data.personalInfo.city}`
+                                        : data.personalInfo.address || data.personalInfo.city || "Address"}
                                 </Text>
                             </View>
                         </View>

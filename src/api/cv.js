@@ -28,6 +28,10 @@ const cvAPI = {
     deleteCv: (id) => {
         return API.delete(`/cv/${id}`);
     },
+    
+    setDefaultCV: (id) => {
+        return API.put(`/cv/${id}/set-default`);
+    },
 
 };
 

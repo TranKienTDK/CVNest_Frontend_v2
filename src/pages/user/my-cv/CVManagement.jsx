@@ -8,10 +8,11 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/routes/routes";
-import { Button, Pagination } from "antd";
+import { Button, Pagination, Modal } from "antd";
 import cvAPI from "@/api/cv";
 import { cn } from "@/lib/utils";
 import { XMarkIcon } from "@heroicons/react/20/solid";
@@ -22,7 +23,6 @@ import sampleDataCV4 from "./components/CVTemplate/sampleDataCV4";
 import TemplateCV2 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV2";
 import TemplateCV3 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV3";
 import TemplateCV4 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV4";
-import { Modal } from "antd";
 
 function CVManagement() {
   const [cvs, setCv] = useState([]);
@@ -32,6 +32,10 @@ function CVManagement() {
   const [size] = useState(9);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [currentCvFormData, setCurrentCvFormData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDefaultModal, setShowDefaultModal] = useState(false);
+  const [defaultCvId, setDefaultCvId] = useState(null);
+  const commentIdRef = useRef(null);
   const navigate = useNavigate();
   const handlePageChange = (page) => {
     setPage(page);
@@ -42,9 +46,19 @@ function CVManagement() {
       try {
         let response;
         response = await cvAPI.getCvs(page - 1, size);
-        setCv(response.data.data.content);
+        const cvList = response.data.data.content;
+        
+        const defaultCv = cvList.find(cv => cv.default === true);
+        console.log("Default CV:", defaultCv);
+        if (defaultCv) {
+          setDefaultCvId(defaultCv.id);
+        }
+        
+        setCv(cvList);
         setTotalcvs(response.data.data.page.totalElements);
         setTotalPages(response.data.data.page.totalPages);
+        
+        console.log("CV list loaded:", cvList);
       } catch (error) {
         console.error("Error fetching CVs:", error);
         toast.error("Không thể tải danh sách CV. Vui lòng thử lại sau.", {
@@ -57,12 +71,14 @@ function CVManagement() {
     fetchCvs();
   }, [page, size]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const commentIdRef = useRef(null);
-
   const toggleModalDeleteComment = (id) => {
     setIsModalOpen(id);
     commentIdRef.current = id;
+  };
+
+  const toggleDefaultCvModal = (id) => {
+    setShowDefaultModal(true);
+    setDefaultCvId(id);
   };
 
   const deleteComment = async (id) => {
@@ -91,8 +107,33 @@ function CVManagement() {
     toggleModalDeleteComment();
   };
 
+  const setDefaultCv = async (id) => {
+    try {
+      await cvAPI.setDefaultCV(id);
+      toast.success("CV đã được đặt làm mặc định", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      
+      setCv(prevCvs => prevCvs.map(cv => ({
+        ...cv,
+        default: cv.id === id
+      })));
+      
+      setDefaultCvId(id);
+      
+      setShowDefaultModal(false);
+    } catch (error) {
+      console.error("Error setting default CV:", error);
+      toast.error("Không thể đặt CV làm mặc định. Vui lòng thử lại sau.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+
   const DeleteModal = ({ isOpen }) => {
-    if (!isOpen) return null; // Nếu modal không mở, không render gì cả
+    if (!isOpen) return null;
 
     return (
       <div
@@ -137,12 +178,75 @@ function CVManagement() {
     );
   };
 
+  const DefaultCVModal = () => {
+    if (!showDefaultModal) return null;
+
+    const selectedCv = cvs.find(cv => cv.id === defaultCvId);
+    
+    return (
+      <div
+        className={cn(
+          "fixed inset-0 backdrop-brightness-50 backdrop-blur-sm flex justify-center items-center z-50"
+        )}
+        onClick={() => setShowDefaultModal(false)}
+      >
+        <div
+          className={cn(
+            "relative bg-white p-6 rounded-lg shadow-lg w-full max-w-[500px]"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button
+            onClick={() => setShowDefaultModal(false)}
+            className={cn(
+              "absolute top-2 right-0 transform -translate-x-1/2",
+              "rounded-full text-gray-700 transition bg-white",
+              "hover:bg-gray-200 hover:cursor-pointer"
+            )}
+          >
+            <XMarkIcon className={cn("size-5")} />
+          </Button>
+
+          <h2 className={cn("text-lg font-semibold mb-4")}>Đặt CV mặc định</h2>
+          <div className="mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+              <Star className="text-[#D83B01] w-8 h-8" />
+            </div>
+          </div>
+          <p className={cn("text-gray-600 mb-4 text-center")}>
+            Bạn có muốn đặt CV <span className="font-semibold">{selectedCv?.cvName}</span> làm CV mặc định không?
+          </p>
+          <p className={cn("text-gray-500 mb-4 text-sm text-center")}>
+            CV mặc định sẽ được sử dụng tự động khi bạn ứng tuyển vào các vị trí việc làm.
+          </p>
+          <div className={cn("flex justify-center gap-3")}>
+            <Button
+              onClick={() => setShowDefaultModal(false)}
+              className={cn(
+                "bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition"
+              )}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={() => setDefaultCv(defaultCvId)}
+              className={cn(
+                "bg-[#D83B01] text-white px-4 py-2 rounded-md hover:bg-[#b43000] transition"
+              )}
+            >
+              Xác nhận
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const viewCVDetail = (id) => {
     navigate(ROUTES.DETAILCV.replace(":id", id));
     console.log("text", ROUTES.DETAILCV.replace(":id", id));
   };
 
-  // Hàm để lấy chi tiết CV và mở modal preview
   const handlePreviewCV = async (id) => {
     try {
       const response = await cvAPI.getDetailCv(id);
@@ -224,7 +328,6 @@ function CVManagement() {
               to={ROUTES.CREATENAMECV}
               className="flex items-center bg-[#D83B01] text-white font-semibold px-4 py-2 rounded-md hover:bg-[#b43000]"
               onClick={() => {
-                // Clear any existing CV draft data when creating a new CV
                 localStorage.removeItem('cv_draft');
               }}
             >
@@ -260,15 +363,25 @@ function CVManagement() {
             cvs.map((cv) => (
               <div
                 key={cv.id}
-                className="grid grid-cols-3 items-center text-sm border-t py-4"
+                className={`grid grid-cols-3 items-center text-sm border-t py-4 ${cv.default ? 'bg-orange-50' : ''}`}
               >
                 {/* Tên CV */}
                 <div className="text-black px-4 flex flex-col items-center text-center">
-                  <div className="font-bold">{cv.cvName}</div>
+                  <div className="font-bold flex items-center gap-1">
+                    {cv.default && (
+                      <Star className="w-4 h-4 fill-[#D83B01] text-[#D83B01]" />
+                    )}
+                    {cv.cvName}
+                  </div>
                   {cv.createdFrom && (
                     <button className="mt-1 text-xs border border-red-500 text-red-500 px-2 py-0.5 rounded-md">
                       Tạo trên {cv.createdFrom}
                     </button>
+                  )}
+                  {cv.default && (
+                    <span className="mt-1 text-xs text-[#D83B01] font-medium">
+                      CV mặc định
+                    </span>
                   )}
                 </div>
 
@@ -319,6 +432,18 @@ function CVManagement() {
                     title="Xoá"
                     onClick={() => toggleModalDeleteComment(cv.id)}
                   />
+                  <Star
+                    className={cn("cursor-pointer", {
+                      "text-yellow-500 fill-yellow-500": cv.default,
+                      "text-gray-400": !cv.default,
+                    })}
+                    title={cv.default ? "CV mặc định" : "Đặt làm CV mặc định"}
+                    onClick={() =>
+                      cv.default
+                        ? null
+                        : toggleDefaultCvModal(cv.id)
+                    }
+                  />
                 </div>
               </div>
             ))
@@ -350,6 +475,7 @@ function CVManagement() {
           </div>
         </div>
         <DeleteModal isOpen={isModalOpen} />
+        <DefaultCVModal />
       </div>
 
       {/* Modal xem trước CV */}

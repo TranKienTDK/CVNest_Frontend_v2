@@ -195,12 +195,10 @@ const CVMatchingPage = () => {
 
     try {
       await updateLoadingState(0, 10);
-      await updateLoadingState(1, 25);
-
-      const apiPromise = axios.post(
+      await updateLoadingState(1, 25);      const apiPromise = axios.post(
         `http://localhost:8000/match-all/${jobId}`,
         {},
-        { signal, timeout: 45000 }
+        { signal, timeout: 40000 }
       );
 
       await updateLoadingState(2, 40);
@@ -451,9 +449,8 @@ const CVMatchingPage = () => {
                       <RefreshCw className="h-5 w-5 mr-2" />
                       {candidates.length > 0 ? "Đánh giá lại" : "Bắt đầu đánh giá"}
                     </Button>
-                  )}
-                  <p className="text-sm text-gray-500 text-center md:text-right">
-                    Thời gian xử lý: ~15-30 giây
+                  )}                  <p className="text-sm text-gray-500 text-center md:text-right">
+                    Thời gian xử lý: ~15-40 giây
                   </p>
                 </div>
               </div>
@@ -982,7 +979,7 @@ const LoadingAnimation = ({ step, progress, messages, onCancel }) => {
           <XCircle className="h-4 w-4 text-red-500" />
           Hủy quá trình
         </Button>
-        <p className="text-sm text-gray-500">Thời gian xử lý: ~15-20 giây</p>
+        <p className="text-sm text-gray-500">Thời gian xử lý: ~15-40 giây</p>
       </div>
       {step === 3 && (
         <motion.div

@@ -11,8 +11,10 @@ const HeroSection = ({
   findJobsButtonText = "Find Jobs",
   backgroundImage = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80",
   isHR = false,
+  onCreateCVClick,
+  onFindJobsClick,
 }) => {
-  const navigate = useNavigate();  return (
+  const navigate = useNavigate();return (
     <>
       {!isHR ? (
         <div className="relative w-full bg-background overflow-hidden">
@@ -32,14 +34,13 @@ const HeroSection = ({
                 {title}
               </h1>
               <p className="text-lg md:text-xl text-white/90 mb-8">{description}</p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
+              <div className="flex flex-col sm:flex-row gap-4">                <Button
                   size="lg"
                   className="bg-white text-primary hover:bg-white/90 font-medium text-base px-6"
-                  onClick={() => {
+                  onClick={onCreateCVClick || (() => {
                     localStorage.removeItem('cv_draft');
                     navigate(ROUTES.CREATENAMECV);
-                  }}
+                  })}
                 >
                   {createCVButtonText}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -48,7 +49,7 @@ const HeroSection = ({
                   size="lg"
                   variant="outline"
                   className="border-white text-white hover:bg-white/10 font-medium text-base px-6"
-                  onClick={() => navigate(ROUTES.JOBS)}
+                  onClick={onFindJobsClick || (() => navigate(ROUTES.JOBS))}
                 >
                   {findJobsButtonText}
                 </Button>

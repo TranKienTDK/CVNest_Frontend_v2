@@ -368,8 +368,9 @@ function PersonalInfoForm() {
                                     render={({field}) => (
                                         <Select {...field} placeholder="Chọn thành phố"
                                                 className={cn("select-dropdown-custom", styles.formSelect)}>
-                                            <Option value="50">TP. Hồ Chí Minh</Option>
-                                            <Option value="29">Hà Nội</Option>
+                                            <Option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</Option>
+                                            <Option value="Hà Nội">Hà Nội</Option>
+                                            <Option value="Đà Nẵng">Đà Nẵng</Option>
                                         </Select>
                                     )}
                                 />
