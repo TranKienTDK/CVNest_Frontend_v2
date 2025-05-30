@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Pagination, Card, Row, Col, Typography } from "antd";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Pagination, Row, Col, Typography } from "antd";
 import companyAPI from "../../api/company";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/header/Header";
 import styles from "./Companypage.module.css";
-import { Button } from "@/components/ui/button";
-import { FilterIcon, FilterXIcon, Search, XCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
-
-const { Title, Paragraph } = Typography;
+import BannerCompany from "./BannerCompany";
+import SearchFilters from "./SearchFilters";
+import CompanyCard from "./CompanyCard";
 
 const CompanyPage = () => {
   const [companies, setCompanies] = useState([]);
@@ -76,148 +67,43 @@ const CompanyPage = () => {
   return (
     <div className={styles.container}>
       <Header />
-      <div style={{ paddingTop: "80px" }}>
-        <div className={styles.introSection}>
-          <Title level={2} className={styles.introTitle}>
-            Khám phá các công ty hàng đầu
-          </Title>
-          <Paragraph className={styles.introText}>
-            Tìm kiếm và kết nối với các công ty hàng đầu trong nhiều lĩnh vực
-            khác nhau.
-          </Paragraph>
+      <div>
+        <BannerCompany 
+          title="Khám phá các công ty hàng đầu"
+          description="Tìm kiếm và kết nối với các công ty hàng đầu trong nhiều lĩnh vực khác nhau."
+        />
+
+        <div className="container mx-auto px-4 mb-8">
+          <SearchFilters
+            search={search}
+            setSearch={setSearch}
+            address={address}
+            setAddress={setAddress}
+            industry={industry}
+            setIndustry={setIndustry}
+            handleSearch={handleSearch}
+            handleClearSearch={handleClearSearch}
+          />
         </div>
 
-        <div className={styles.searchSection}>
-          <Title level={3} className={styles.title}>
-            Tìm kiếm Công ty
-          </Title>
-          <div className={styles.searchBox}>
-            <Input
-              placeholder="Nhập tên công ty"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: "30%", marginRight: "10px" }}
-            />
-
-            <Select onValueChange={setAddress} value={address}>
-              <SelectTrigger className="w-[20%]">
-                <SelectValue placeholder="Chọn địa chỉ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem className={styles.selectItem} value="Hà Nội">
-                  Hà Nội
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Hồ Chí Minh">
-                  TP HCM
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Đà Nẵng">
-                  Đà Nẵng
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select onValueChange={setIndustry} value={industry}>
-              <SelectTrigger className="w-[20%]">
-                <SelectValue placeholder="Chọn lĩnh vực" />
-              </SelectTrigger>
-              <SelectContent className={styles.selectContent}>
-                <SelectItem className={styles.selectItem} value="Phần mềm">
-                  Phần mềm
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Software">
-                  Software
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Ngân hàng">
-                  Ngân hàng
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Viễn thông">
-                  Viễn thông
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Edtech">
-                  Edtech
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Bất động sản">
-                  Bất động sản
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Fintech">
-                  Fintech
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Giáo dục">
-                  Giáo dục
-                </SelectItem>
-                <SelectItem
-                  className={styles.selectItem}
-                  value="Thương mại điện tử"
-                >
-                  Thương mại điện tử
-                </SelectItem>
-                <SelectItem
-                  className={styles.selectItem}
-                  value="Gia công phần mềm"
-                >
-                  Gia công phần mềm
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Kinh doanh">
-                  Kinh doanh
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Bảo hiểm">
-                  Bảo hiểm
-                </SelectItem>
-                <SelectItem className={styles.selectItem} value="Game">
-                  Game
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              className="bg-primaryRed font-bold hover:bg-primaryRed"
-              onClick={handleSearch}
-              type="primary"
-              style={{ marginRight: "10px" }}
-            >
-              <Search className="w-4 h-4 mr-2" />
-              Tìm kiếm
-            </Button>
-
-            <Button
-              className="bg-primaryRed font-bold hover:bg-primaryRed"
-              onClick={handleClearSearch}
-              type="default"
-            >
-              <FilterXIcon className="w-4 h-4 mr-2" />
-              Xóa tìm kiếm
-            </Button>
-          </div>
+        <div className="container mx-auto px-4 mb-8">
+          <Row gutter={[16, 24]}>
+            {companies.map((company) => (
+              <Col key={company.id} xs={24} sm={12} md={8}>
+                <CompanyCard
+                  id={company.id}
+                  name={company.name}
+                  avatar={company.avatar}
+                  industry={company.industry}
+                  location={company.address}
+                  onClick={handleCompanyClick}
+                />
+              </Col>
+            ))}
+          </Row>
         </div>
 
-        <Row gutter={[16, 16]}>
-          {companies.map((company) => (
-            <Col key={company.id} xs={24} sm={12} md={8}>
-              <Card
-                hoverable
-                className={styles.companyCard}
-                onClick={() => handleCompanyClick(company.id)}
-                style={{ cursor: "pointer" }}
-              >
-                <div className={styles.cardContent}>
-                  <img
-                    alt={company.name}
-                    src={company.avatar}
-                    className={styles.companyImage}
-                  />
-                  <div className={styles.cardText}>
-                    <h3 className={styles.companyName}>{company.name}</h3>
-                    <p className={styles.companyIndustry}>
-                      Lĩnh vực: {company.industry || "Không xác định"}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-
-        <div className={styles.pagination}>
+        <div className="container mx-auto px-4 flex justify-center my-8">
           <Pagination
             current={page}
             total={totalElements}
