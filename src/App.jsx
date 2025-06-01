@@ -6,6 +6,7 @@ import VerifyForgotPassword from "./pages/auth/forgot_password/VerifyForgotPassw
 import ResetPassword from "./pages/auth/forgot_password/ResetPassword";
 import CompanyPage from "./pages/company/Companypage";
 import {ToastContainer} from "react-toastify";
+import { Toaster } from "sonner";
 import UserHomepage from "./pages/homepage/UserHomepage";
 import HomeRouter from "./pages/homepage/HomeRouter";
 import HRHomepage from "./pages/homepage/HRHomepage";
@@ -29,6 +30,7 @@ import ApplicationsManagement from "./pages/user/applications/ApplicationsManage
 import HRApplicationsManagement from "./pages/hr/ApplicationsManagement";
 import JobManagement from "./pages/hr/JobManagement";
 import CVMatchingPage from "./pages/hr/match/CVMatchingPage";
+import JobApplicationsDetail from "./pages/hr/JobApplicationsDetail";
 
 function App() {
     return (
@@ -66,11 +68,13 @@ function App() {
                     <Route path="jobs" element={<JobManagement />} />
                     <Route path="jobs/:id" element={<JobManagement />} />
                     <Route path="cv-evaluate/:jobId" element={<CVMatchingPage />} />
+                    <Route path="job-applications/:jobId" element={<JobApplicationsDetail />} />
                 </Route>
                 
                 <Route path="/test" element={<></>}/>
             </Routes>
             <ToastContainer/>
+            <Toaster position="top-right" richColors />
         </Router>
     );
 }
