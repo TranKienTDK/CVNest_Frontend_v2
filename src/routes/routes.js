@@ -24,4 +24,5 @@ export const ROUTES = {
     APPLICATIONSMANAGEMENT: "/hr/applications",
     CVMATCHING: "/hr/cv-evaluate",
     JOB_APPLICATIONS_DETAIL: "/hr/job-applications/:jobId",
+    SAVED_CVS: "/hr/saved-cv",
 };

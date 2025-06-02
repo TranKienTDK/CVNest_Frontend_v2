@@ -298,7 +298,7 @@ const TemplateCV3 = ({ data }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About Me</Text>
           <Text style={styles.content}>
-            {htmlToText(data.introduction || "", { wordwrap: false }).trim() || "Professional summary goes here"}
+            {htmlToText(data.profile || "", { wordwrap: false }).trim() || "Professional summary goes here"}
           </Text>
         </View>
 

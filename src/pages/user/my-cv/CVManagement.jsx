@@ -501,9 +501,9 @@ function CVManagement() {
                   case 2:
                     return <TemplateCV2 data={currentCvFormData} />;
                   case 3:
-                    return <TemplateCV3 data={sampleDataCV4} />;
+                    return <TemplateCV3 data={currentCvFormData} />;
                   case 4:
-                    return <TemplateCV4 data={sampleDataCV4} />;
+                    return <TemplateCV4 data={currentCvFormData} />;
                   default:
                     return <TemplateCV1 data={currentCvFormData} />;
                 }

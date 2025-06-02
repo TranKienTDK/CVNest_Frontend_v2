@@ -66,7 +66,7 @@ const transformApiDataToFormData = (apiData) => {
       avatar: apiData.info?.avatar || "",
     },
 
-    introduction: apiData.profile || "",
+    profile: apiData.profile || "",
 
     experiences: Array.isArray(apiData.experiences)
       ? apiData.experiences.map((exp) => {

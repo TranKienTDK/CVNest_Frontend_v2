@@ -31,6 +31,18 @@ const cvAPI = {
     
     setDefaultCV: (id) => {
         return API.put(`/cv/${id}/set-default`);
+    },    saveCV: (payload) => {
+        return API.post(`/cv/saved-cv`, payload);
+    },
+
+    getSavedCVs: (hrId) => {
+        return API.get(`/cv/${hrId}/saved-cv`);
+    },
+    
+    removeSavedCV: (hrId, cvId) => {
+        return API.delete(`/cv/saved-cv`, { 
+            data: { hrId, cvId }
+        });
     },
 
 };

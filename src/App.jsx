@@ -31,6 +31,7 @@ import HRApplicationsManagement from "./pages/hr/ApplicationsManagement";
 import JobManagement from "./pages/hr/JobManagement";
 import CVMatchingPage from "./pages/hr/match/CVMatchingPage";
 import JobApplicationsDetail from "./pages/hr/JobApplicationsDetail";
+import SavedCV from "./pages/hr/saved_cv";
 
 function App() {
     return (
@@ -69,6 +70,7 @@ function App() {
                     <Route path="jobs/:id" element={<JobManagement />} />
                     <Route path="cv-evaluate/:jobId" element={<CVMatchingPage />} />
                     <Route path="job-applications/:jobId" element={<JobApplicationsDetail />} />
+                    <Route path="saved-cv" element={<SavedCV />} />
                 </Route>
                 
                 <Route path="/test" element={<></>}/>

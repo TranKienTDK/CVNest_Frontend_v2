@@ -21,6 +21,7 @@ import {
   ClipboardList,
   X,
   Check,
+  Star,
 } from "lucide-react"
 
 import {
@@ -208,6 +209,7 @@ export default function Header({ className }) {
     { icon: UserCog, title: "Quản lý thông tin cá nhân", link: ROUTES.PROFILE },
     { icon: ClipboardList, title: "Quản lý tin tuyển dụng", link: ROUTES.HR_JOBS },
     { icon: FileText, title: "Quản lý CV ứng tuyển", link: ROUTES.HR_APPLICATIONS },
+    { icon: Star, title: "CV Đã Lưu", link: ROUTES.SAVED_CVS },
   ]
 
   // User menu items
