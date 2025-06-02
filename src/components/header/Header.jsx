@@ -124,7 +124,6 @@ export default function Header({ className }) {
     setIsLoadingNotifications(true)
     try {
       const response = await notification.getNotifications(userData.id)
-      console.log("Fetched notifications:", response.data)
       if (response.data?.data) {
         const notificationData = response.data.data
         setNotifications(notificationData)
@@ -165,10 +164,7 @@ export default function Header({ className }) {
       handleMarkAsRead(notif.id)
     }
     
-    if (notif.type === "JOB_APPLICATION") {
-      navigate(`/hr/applications/${notif.entityId}`)
-    }
-    
+    navigate(ROUTES.HR_APPLICATIONS)
     setShowNotifications(false)
   }
 
@@ -327,7 +323,7 @@ export default function Header({ className }) {
                       className="flex items-center gap-2 rounded-md p-2 hover:bg-muted"
                       onClick={() => {
                         setShowCongCuDropdown(false);
-                        localStorage.removeItem('cv_draft'); // Xóa draft nếu có
+                        localStorage.removeItem('cv_draft');
                       }}
                     >
                       <FileEdit className="h-4 w-4" />
@@ -660,7 +656,7 @@ export default function Header({ className }) {
                         className="flex items-center gap-2 rounded-md p-2 hover:bg-muted"
                         onClick={() => {
                           setIsMobileMenuOpen(false);
-                          localStorage.removeItem('cv_draft'); // Xóa draft nếu có
+                          localStorage.removeItem('cv_draft');
                         }}
                       >
                         <FileEdit className="h-4 w-4" />

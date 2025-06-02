@@ -85,18 +85,16 @@ function CVManagement() {
     console.log("Xoá CV với ID:", id);
     try {
       await cvAPI.deleteCv(id);
-      // console.log("response: ", response);
       toast.success("Delete CV successfully", {
         position: "top-right",
         autoClose: 0,
       });
       setCv((prev) => prev.filter((cv) => cv.id !== id));
       setTotalcvs((prev) => prev - 1);
-      // Nếu danh sách hiện tại rỗng sau xoá thì chuyển về trang 1
       if (cvs.length - 1 === 0 && page > 1) {
         setPage((prev) => prev - 1);
       }
-      setIsModalOpen(false); // Đóng modal
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error deleting CV:", error);
       toast.error("Error delete CV " + id, {
@@ -109,7 +107,20 @@ function CVManagement() {
 
   const setDefaultCv = async (id) => {
     try {
-      await cvAPI.setDefaultCV(id);
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (!userData || !userData.id) {
+        toast.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        return;
+      }
+      
+      await cvAPI.setDefaultCV({
+        cvId: id,
+        userId: userData.id
+      });
+      
       toast.success("CV đã được đặt làm mặc định", {
         position: "top-right",
         autoClose: 2000,
