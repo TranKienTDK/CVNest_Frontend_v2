@@ -54,7 +54,8 @@ import {
   Briefcase,
   DollarSign,
   Building,
-  ArrowLeft
+  ArrowLeft,
+  Bookmark
 } from "lucide-react";
 import { format } from "date-fns";
 import viLocale from "date-fns/locale/vi";
@@ -340,6 +341,26 @@ const JobApplicationsDetail = () => {
       });
     } finally {
       setLoadingCV(false);
+    }
+  };
+
+  const handleSaveCV = async (cvId) => {
+    try {
+      await cvAPI.saveCV({
+        hrId: userData.id,
+        cvId: cvId
+      });
+      
+      toast.success("Đã lưu CV thành công.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (err) {
+      console.error("Error saving CV:", err);
+      toast.error("CV đã được lưu. Vui lòng chọn CV khác.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     }
   };
 
@@ -925,14 +946,22 @@ const JobApplicationsDetail = () => {
                                     {getStatusBadge(application.status)}
                                   </TableCell>
                                   <TableCell className={`py-4 px-6 ${styles['action-cell']}`}>
-                                    <div className="flex justify-center space-x-2">
-                                      <Button
+                                    <div className="flex justify-center space-x-2">                                      <Button
                                         variant="outline"
                                         size="sm"
                                         className={`${styles['action-button']} bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 rounded-lg`}
                                         onClick={() => handlePreviewCV(application.cvId)}
                                       >
                                         <Eye className="w-4 h-4" />
+                                      </Button>
+                                      
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className={`${styles['action-button']} bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 rounded-lg`}
+                                        onClick={() => handleSaveCV(application.cvId)}
+                                      >
+                                        <Bookmark className="w-4 h-4" />
                                       </Button>
                                       
                                       {application.status === "PENDING" && (
@@ -1079,8 +1108,7 @@ const JobApplicationsDetail = () => {
                                   </TableCell>
                                   <TableCell className={`py-4 px-6 ${styles['status-cell']}`}>
                                     {getStatusBadge(application.status)}
-                                  </TableCell>
-                                  <TableCell className={`py-4 px-6 ${styles['action-cell']}`}>
+                                  </TableCell>                                  <TableCell className={`py-4 px-6 ${styles['action-cell']}`}>
                                     <div className="flex justify-center space-x-2">
                                       <Button
                                         variant="outline"
@@ -1090,7 +1118,15 @@ const JobApplicationsDetail = () => {
                                       >
                                         <Eye className="w-4 h-4" />
                                       </Button>
+                                      
                                       <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className={`${styles['action-button']} bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 rounded-lg`}
+                                        onClick={() => handleSaveCV(application.cvId)}
+                                      >
+                                        <Bookmark className="w-4 h-4" />
+                                      </Button>                                      <Button
                                         variant="outline"
                                         size="sm"
                                         className={`${styles['action-button']} bg-green-50 border-green-200 text-green-700 hover:bg-green-100 rounded-lg`}

@@ -43,7 +43,8 @@ import {
   Clock,
   FileText,
   Download,
-  Star
+  Star,
+  Bookmark
 } from "lucide-react";
 import { format } from "date-fns";
 import viLocale from "date-fns/locale/vi";
@@ -348,6 +349,26 @@ const ApplicationsManagement = () => {
     }
   };
 
+  const handleSaveCV = async (cvId) => {
+    try {
+      await cvAPI.saveCV({
+        hrId: userData.id,
+        cvId: cvId
+      });
+      
+      toast.success("Đã lưu CV thành công.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (err) {
+      console.error("Error saving CV:", err);
+      toast.error("CV đã được lưu. Vui lòng chọn CV khác.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+  
   const ModalContent = () => (
     <Modal
       open={showPreviewModal}
@@ -482,8 +503,7 @@ const ApplicationsManagement = () => {
     },
     {
       title: "Hành động",
-      key: "action",
-      render: (_, record) => (
+      key: "action",      render: (_, record) => (
         <Space size="small">
           <Tooltip title="Xem CV">
             <Button
@@ -491,6 +511,15 @@ const ApplicationsManagement = () => {
               icon={<Eye size={16} />}
               onClick={() => handlePreviewCV(record.cvId)}
               className="bg-blue-500"
+            />
+          </Tooltip>
+          
+          <Tooltip title="Lưu CV">
+            <Button
+              type="primary"
+              icon={<Bookmark size={16} />}
+              onClick={() => handleSaveCV(record.cvId)}
+              className="bg-purple-500"
             />
           </Tooltip>
           
@@ -803,8 +832,7 @@ const ApplicationsManagement = () => {
                             <TableCell className={`py-4 px-6 ${styles['status-cell']}`}>
                               {getStatusBadge(application.status)}
                             </TableCell>
-                            <TableCell className={`py-4 px-6 ${styles['action-cell']}`}>
-                              <div className="flex justify-center space-x-2">
+                            <TableCell className={`py-4 px-6 ${styles['action-cell']}`}>                              <div className="flex justify-center space-x-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -812,6 +840,15 @@ const ApplicationsManagement = () => {
                                   onClick={() => handlePreviewCV(application.cvId)}
                                 >
                                   <Eye className="w-4 h-4" />
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={`${styles['action-button']} bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 rounded-lg`}
+                                  onClick={() => handleSaveCV(application.cvId)}
+                                >
+                                  <Bookmark className="w-4 h-4" />
                                 </Button>
                                 
                                 {application.status === "PENDING" && (
