@@ -1,10 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import dayjs from "dayjs";
 import { motion, AnimatePresence } from "framer-motion";
+import { notification, Modal, Spin } from "antd";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { TemplateCV1 } from "@/pages/user/my-cv/components/CVTemplate/TemplateCV1";
+import TemplateCV2 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV2";
+import TemplateCV3 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV3";
+import TemplateCV4 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV4";
+import { PDFViewer } from "@react-pdf/renderer";
+import cvAPI from "@/api/cv";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./TabsComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EmailComposeModal } from "../email/EmailComposeModal";
+import { getEmailPreview, sendEmail } from "../../../api/email";
 import {
   Select,
   SelectContent,
@@ -43,9 +55,7 @@ import {
   RefreshCw,
   Circle,
 } from "lucide-react";
-import * as Dialog from "@radix-ui/react-dialog";
 
-// Badge component
 const Badge = ({ children, className, variant = "default" }) => {
   const variantStyles = {
     default: "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -62,7 +72,6 @@ const Badge = ({ children, className, variant = "default" }) => {
   );
 };
 
-// Helper function to parse explanation string into key-value pairs
 const parseExplanationToDetails = (explanationText) => {
   const details = {};
   if (typeof explanationText !== "string" || !explanationText) {
@@ -90,8 +99,121 @@ const parseExplanationToDetails = (explanationText) => {
         }
       }
     });
-  }
-  return details;
+  } return details;
+};
+
+// CV Data transformation function
+const transformApiDataToFormData = (apiData) => {
+  if (!apiData) return null;
+
+  const formattedData = {
+    id: apiData.id,
+    name: apiData.cvName || apiData.name,
+    templateId: apiData.templateId || 1,
+    personalInfo: {
+      id: apiData.info?.id,
+      fullname: apiData.info?.fullName || "",
+      position: apiData.info?.position || "",
+      email: apiData.info?.email || "",
+      phone: apiData.info?.phone || "",
+      gender: apiData.info?.gender || "",
+      dob: apiData.info?.dob || null,
+      city: apiData.info?.city || "",
+      address: apiData.info?.address || "",
+      linkedin: apiData.info?.linkedin || "",
+      github: apiData.info?.github || "",
+      jobStatus: apiData.info?.jobStatus || "",
+      expectedSalary: apiData.info?.expectedSalary || "",
+      avatar: apiData.info?.avatar || "",
+    },
+    profile: apiData.profile || "",
+    experiences: Array.isArray(apiData.experiences)
+      ? apiData.experiences.map((exp) => ({
+          id: exp.id || Date.now(),
+          company: exp.company || "",
+          position: exp.position || "",
+          startDate: exp.startDate ? dayjs(exp.startDate) : null,
+          endDate: exp.endDate ? dayjs(exp.endDate) : null,
+          isCurrent: !exp.endDate,
+          description: exp.description || "",
+        }))
+      : [],
+    skills: Array.isArray(apiData.skills)
+      ? apiData.skills.map((skill) => ({
+          id: skill.id || Date.now(),
+          skill: skill.name || "",
+          rate: skill.rate || 0,
+        }))
+      : [],
+    education: Array.isArray(apiData.educations)
+      ? apiData.educations.map((edu) => ({
+          id: edu.id || Date.now(),
+          school: edu.school || "",
+          field: edu.field || "",
+          startDate: edu.startDate ? dayjs(edu.startDate) : null,
+          endDate: edu.endDate ? dayjs(edu.endDate) : null,
+          description: edu.description || "",
+        }))
+      : [],
+    projects: Array.isArray(apiData.projects)
+      ? apiData.projects.map((p) => ({
+          id: p.id || Date.now(),
+          project: p.project || "",
+          startDate: p.startDate ? dayjs(p.startDate) : null,
+          endDate: p.endDate ? dayjs(p.endDate) : null,
+          description: p.description || "",
+        }))
+      : [],
+    interests: Array.isArray(apiData.interests)
+      ? apiData.interests.map((h) => ({
+          id: h.id || Date.now(),
+          interest: h.interest || "",
+        }))
+      : [],
+    hobbies: Array.isArray(apiData.interests)
+      ? apiData.interests.map((h) => ({
+          id: h.id || Date.now(),
+          name: h.interest || "",
+        }))
+      : [],
+    consultants: Array.isArray(apiData.consultants)
+      ? apiData.consultants.map((c) => ({
+          id: c.id || Date.now(),
+          name: c.name || "",
+          position: c.position || "",
+          email: c.email || "",
+          phone: c.phone || "",
+        }))
+      : [],
+    languages: Array.isArray(apiData.languages)
+      ? apiData.languages.map((l) => ({
+          id: l.id || Date.now(),
+          language: l.language || "",
+          level: l.level || "",
+        }))
+      : [],
+    activities: Array.isArray(apiData.activities)
+      ? apiData.activities.map((a) => ({
+          id: a.id || Date.now(),
+          activity: a.activity || "",
+          startDate: a.startDate ? dayjs(a.startDate) : null,
+          endDate: a.endDate ? dayjs(a.endDate) : null,
+          isCurrent: !a.endDate,
+          description: a.description || "",
+        }))
+      : [],
+    certificates: Array.isArray(apiData.certificates)
+      ? apiData.certificates.map((c) => ({
+          id: c.id || Date.now(),
+          certificate: c.certificate || "",
+          date: c.date ? dayjs(c.date) : null,
+          description: c.description || "",
+        }))
+      : [],
+    additionalInfo: apiData.additionalInfo || "",
+  };
+
+  return formattedData;
 };
 
 const CVMatchingPage = () => {
@@ -116,6 +238,50 @@ const CVMatchingPage = () => {
     { message: "Chuẩn bị hiển thị kết quả", completed: false },
   ]);
   const abortControllerRef = useRef(null);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailPreviewLoading, setEmailPreviewLoading] = useState(false);
+  const [emailData, setEmailData] = useState({
+    to: "",
+    subject: "",
+    body: ""
+  });
+
+  // CV Preview states
+  const [previewCV, setPreviewCV] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [loadingCV, setLoadingCV] = useState(false);
+  const [cvDetailsCache, setCvDetailsCache] = useState({});
+  // CV Preview function
+  const handlePreviewCV = async (cvId) => {
+    try {
+      setLoadingCV(true);
+      let cvData;
+
+      if (cvDetailsCache[cvId]) {
+        cvData = cvDetailsCache[cvId];
+      } else {
+        const response = await cvAPI.getDetailCv(cvId);
+        cvData = response.data.data;
+
+        setCvDetailsCache(prev => ({
+          ...prev,
+          [cvId]: cvData
+        }));
+      }
+
+      const formattedData = transformApiDataToFormData(cvData);
+      setPreviewCV(formattedData);
+      setShowPreviewModal(true);
+    } catch (error) {
+      console.error("Error fetching CV details:", error);
+      toast.error("Không thể tải thông tin CV. Vui lòng thử lại sau.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } finally {
+      setLoadingCV(false);
+    }
+  };
 
   useEffect(() => {
     if (location.state && location.state.job) {
@@ -195,7 +361,7 @@ const CVMatchingPage = () => {
 
     try {
       await updateLoadingState(0, 10);
-      await updateLoadingState(1, 25);      const apiPromise = axios.post(
+      await updateLoadingState(1, 25); const apiPromise = axios.post(
         `http://localhost:8000/match-all/${jobId}`,
         {},
         { signal, timeout: 40000 }
@@ -216,6 +382,7 @@ const CVMatchingPage = () => {
       await updateLoadingState(4, 100);
 
       if (response.data && Array.isArray(response.data)) {
+        console.log("CV Matching Response:", response.data);
         const transformedData = response.data.map((item, index) => {
           if (!item || !item.cv_id) {
             return {
@@ -343,9 +510,98 @@ const CVMatchingPage = () => {
   const toggleExpand = (id) => {
     setExpandedCandidate(expandedCandidate === id ? null : id);
   };
-
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+  };
+  const handleContactCandidate = async (candidate) => {
+    if (!selectedJob || !candidate) {
+      console.error("Missing selectedJob or candidate data");
+      notification.error({
+        message: "Lỗi",
+        description: "Không thể mở modal email. Vui lòng thử lại.",
+        placement: "topRight",
+        duration: 3
+      });
+      return;
+    }
+
+    setEmailPreviewLoading(true);
+    setEmailModalOpen(true);
+
+    try {
+      const previewData = {
+        jobId: selectedJob.id,
+        candidateEmail: candidate.email,
+        candidateName: candidate.name
+      };
+
+      const response = await getEmailPreview(previewData);
+
+      if (response && response.data) {
+        setEmailData({
+          to: candidate.email,
+          subject: response.data.subject || "",
+          body: response.data.body || ""
+        });
+      } else {
+        setEmailData({
+          to: candidate.email,
+          subject: `Cơ hội việc làm: ${selectedJob.title}`,
+          body: `Xin chào ${candidate.name},\n\nChúng tôi quan tâm đến hồ sơ của bạn cho vị trí ${selectedJob.title}...\n\nTrân trọng.`
+        });
+
+        notification.warning({
+          message: "Không thể tải nội dung email mẫu",
+          description: "Đã sử dụng nội dung email mặc định. Bạn có thể chỉnh sửa nội dung.",
+          placement: "topRight",
+          duration: 4
+        });
+      }
+    } catch (error) {
+      console.error("Error getting email preview:", error);
+      setEmailData({
+        to: candidate.email,
+        subject: `Cơ hội việc làm: ${selectedJob.title}`,
+        body: `Xin chào ${candidate.name},\n\nChúng tôi quan tâm đến hồ sơ của bạn cho vị trí ${selectedJob.title}...\n\nTrân trọng.`
+      });
+
+      notification.warning({
+        message: "Không thể tải nội dung email mẫu",
+        description: "Đã sử dụng nội dung email mặc định. Bạn có thể chỉnh sửa nội dung.",
+        placement: "topRight",
+        duration: 4
+      });
+    } finally {
+      setEmailPreviewLoading(false);
+    }
+  }; const handleSendEmail = async (emailPayload) => {
+    try {
+      const emailData = {
+        to: emailPayload.to,
+        subject: emailPayload.subject,
+        htmlBody: emailPayload.htmlBody
+      };
+
+      const response = await sendEmail(emailData);
+      console.log("Email sent successfully:", response);
+
+      notification.success({
+        message: "Gửi email thành công",
+        description: `Email đã được gửi tới ${emailPayload.to}`,
+        placement: "topRight",
+        duration: 3
+      });
+
+    } catch (error) {
+      console.error("Error sending email:", error);
+
+      notification.error({
+        message: "Gửi email thất bại",
+        description: "Có lỗi xảy ra khi gửi email. Vui lòng thử lại.",
+        placement: "topRight",
+        duration: 4
+      });
+    }
   };
 
   const getMatchBadge = (match) => {
@@ -637,30 +893,20 @@ const CVMatchingPage = () => {
                             ) : (
                               <ChevronDown className="ml-1.5 h-4 w-4" />
                             )}
-                          </Button>
-                          <div className="flex gap-3 w-full sm:w-auto">
-                            <Dialog.Root>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1 sm:flex-none bg-white border-gray-200 hover:bg-gray-50 rounded-lg"
-                                >
-                                  <Eye className="mr-1.5 h-4 w-4" />
-                                  Xem CV
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl">
-                                <DialogHeader>
-                                  <DialogTitle className="text-xl font-semibold">CV của {candidate.name}</DialogTitle>
-                                  <DialogDescription>Điểm số phù hợp: {candidate.matchScore}%</DialogDescription>
-                                </DialogHeader>
-                                <ResumePreview resumeUrl={candidate.resumeUrl} candidateName={candidate.name} />
-                              </DialogContent>
-                            </Dialog.Root>
+                          </Button>                          <div className="flex gap-3 w-full sm:w-auto">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 sm:flex-none bg-white border-gray-200 hover:bg-gray-50 rounded-lg"
+                              onClick={() => handlePreviewCV(candidate.id)}
+                            >
+                              <Eye className="mr-1.5 h-4 w-4" />
+                              Xem CV
+                            </Button>
                             <Button
                               size="sm"
                               className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                              onClick={() => handleContactCandidate(candidate)}
                             >
                               <Mail className="mr-1.5 h-4 w-4" />
                               Liên hệ
@@ -883,8 +1129,76 @@ const CVMatchingPage = () => {
               <CandidateSkeleton key={i} />
             ))}
           </div>
+        )}      </motion.div>      {/* Email Compose Modal */}
+      <EmailComposeModal
+        open={emailModalOpen}
+        onOpenChange={setEmailModalOpen}
+        defaultTo={emailData.to}
+        defaultSubject={emailData.subject}
+        defaultBody={emailData.body}
+        onSend={handleSendEmail}
+        loading={emailPreviewLoading}
+      />      {/* CV Preview Modal */}
+      <Modal
+        open={showPreviewModal}
+        onCancel={() => setShowPreviewModal(false)}
+        centered
+        width="95%"
+        style={{
+          top: 20,
+          maxWidth: 1200,
+          margin: '0 auto'
+        }}
+        bodyStyle={{
+          height: 'calc(95vh - 40px)',
+          padding: 0,
+          overflow: 'hidden'
+        }}
+        footer={null}
+        destroyOnClose
+        className="custom-preview-modal"
+      >
+        {loadingCV ? (
+          <div className="flex justify-center items-center py-20">
+            <Spin size="large" />
+            <span className="ml-3 text-gray-600">Đang tải CV...</span>
+          </div>
+        ) : previewCV ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="h-full bg-white rounded-lg overflow-hidden"
+          >
+            <motion.div className="h-full">
+              <PDFViewer width="100%" height="100%" showToolbar>
+                {(() => {
+                  switch (previewCV.templateId) {
+                    case 1:
+                      return <TemplateCV1 data={previewCV} />;
+                    case 2:
+                      return <TemplateCV2 data={previewCV} />;
+                    case 3:
+                      return <TemplateCV3 data={previewCV} />;
+                    case 4:
+                      return <TemplateCV4 data={previewCV} />;
+                    default:
+                      return <TemplateCV1 data={previewCV} />;
+                  }
+                })()}
+              </PDFViewer>
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8"
+          >
+            Không có thông tin CV
+          </motion.div>
         )}
-      </motion.div>
+      </Modal>
     </div>
   );
 };
@@ -995,46 +1309,7 @@ const LoadingAnimation = ({ step, progress, messages, onCancel }) => {
   );
 };
 
-const DialogTrigger = Dialog.Trigger;
-const DialogContent = React.forwardRef(({ children, className, ...props }, ref) => (
-  <Dialog.Portal>
-    <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-200" />
-    <Dialog.Content
-      ref={ref}
-      className={`fixed left-[50%] top-[50%] z-50 w-full max-w-5xl translate-x-[-50%] translate-y-[-50%] bg-white p-8 rounded-2xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${className || ""}`}
-      {...props}
-    >
-      {children}
-      <Dialog.Close className="absolute right-6 top-6 rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition-colors">
-        <XCircle className="h-5 w-5 text-gray-600" />
-        <span className="sr-only">Close</span>
-      </Dialog.Close>
-    </Dialog.Content>
-  </Dialog.Portal>
-));
-DialogContent.displayName = "DialogContent";
 
-const DialogHeader = ({ className, ...props }) => (
-  <div className={`flex flex-col space-y-2 text-left ${className || ""}`} {...props} />
-);
-
-const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
-  <Dialog.Title
-    ref={ref}
-    className={`text-2xl font-semibold text-gray-900 ${className || ""}`}
-    {...props}
-  />
-));
-DialogTitle.displayName = "DialogTitle";
-
-const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <Dialog.Description
-    ref={ref}
-    className={`text-sm text-gray-600 ${className || ""}`}
-    {...props}
-  />
-));
-DialogDescription.displayName = "DialogDescription";
 
 function getScoreColor(score) {
   if (typeof score !== "number" || isNaN(score)) return "#f59e0b";
@@ -1092,31 +1367,6 @@ function FileSearchOutlined({ className }) {
     </svg>
   );
 }
-
-const ResumePreview = ({ resumeUrl, candidateName }) => {
-  const [previewLoading, setPreviewLoading] = useState(true);
-
-  return (
-    <div className="mt-6 relative">
-      {previewLoading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10"
-        >
-          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
-          <p className="text-gray-600">Đang tải bản xem trước CV...</p>
-        </motion.div>
-      )}
-      <iframe
-        src={resumeUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=resume"}
-        className="w-full h-[70vh] border border-gray-200 rounded-lg"
-        title={`CV của ${candidateName}`}
-        onLoad={() => setPreviewLoading(false)}
-      />
-    </div>
-  );
-};
 
 const style = document.createElement("style");
 style.textContent = `
