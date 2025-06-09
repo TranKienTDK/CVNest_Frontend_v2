@@ -767,7 +767,7 @@ function ApplicationsManagement() {
                                 Không có CV ứng tuyển nào phù hợp với tiêu chí tìm kiếm của bạn. Vui lòng thử lại với các bộ lọc khác.
                             </p>
                             <Button 
-                                onClick={() => navigate('/viec-lam-it')}
+                                onClick={() => navigate('/jobs')}
                                 className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
                             >
                                 <Briefcase className="w-4 h-4 mr-2" />
