@@ -380,10 +380,12 @@ const CVMatchingPage = () => {
 
       setLoadingProgress(90);
       await updateLoadingState(4, 100);
-
-      if (response.data && Array.isArray(response.data)) {
+      if (response.data && (Array.isArray(response.data) || (response.data.results && Array.isArray(response.data.results)))) {
         console.log("CV Matching Response:", response.data);
-        const transformedData = response.data.map((item, index) => {
+        
+        const resultsArray = Array.isArray(response.data) ? response.data : response.data.results;
+        
+        const transformedData = resultsArray.map((item, index) => {
           if (!item || !item.cv_id) {
             return {
               id: `error-${index}`,
@@ -397,6 +399,8 @@ const CVMatchingPage = () => {
               education: [],
               explanationDetails: {},
               resumeUrl: "#",
+              recommendedAction: null,
+              actionReason: "Dữ liệu không hợp lệ",
             };
           }
 
@@ -423,6 +427,8 @@ const CVMatchingPage = () => {
             education,
             explanationDetails,
             resumeUrl: item.resume_url || "#",
+            recommendedAction: item.recommended_action || null,
+            actionReason: item.action_reason || "Không có gợi ý hành động",
           };
         });
 
@@ -601,6 +607,41 @@ const CVMatchingPage = () => {
         placement: "topRight",
         duration: 4
       });
+    }  };
+
+  const getRecommendedActionBadge = (action) => {
+    if (!action) {
+      return (
+        <Badge className="bg-gray-100 text-gray-700 border-gray-200">
+          <XCircle className="h-3 w-3 mr-1" />
+          Không có gợi ý
+        </Badge>
+      );
+    }
+
+    switch (action) {
+      case "send_contact_email":
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <Mail className="h-3 w-3 mr-1" />
+            Gửi email liên hệ
+          </Badge>
+        );
+      case "save_cv":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            <BookOpen className="h-3 w-3 mr-1" />
+            Lưu CV
+          </Badge>
+        );
+      case "no_recommendation":
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-700 border-gray-200">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Chưa đạt yêu cầu
+          </Badge>
+        );
     }
   };
 
@@ -850,12 +891,25 @@ const CVMatchingPage = () => {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="p-6 pt-0">
-                        <div className="mb-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
+                      <CardContent className="p-6 pt-0">                        <div className="mb-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
                           <p className="flex items-start gap-2">
                             <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
                             <span className="line-clamp-3">{typeof candidate.explanation === "string" ? candidate.explanation : "Không có giải thích."}</span>
                           </p>
+                        </div>
+                        
+                        {/* Recommended Action Section */}
+                        <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            Gợi ý hành động từ AI
+                          </h4>
+                          <div className="flex flex-col gap-2">
+                            {getRecommendedActionBadge(candidate.recommendedAction)}
+                            <p className="text-sm text-blue-700 italic">
+                              {candidate.actionReason}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-4">
                           {Array.isArray(candidate.skills) && candidate.skills.length > 0 ? (
@@ -903,14 +957,43 @@ const CVMatchingPage = () => {
                               <Eye className="mr-1.5 h-4 w-4" />
                               Xem CV
                             </Button>
-                            <Button
-                              size="sm"
-                              className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                              onClick={() => handleContactCandidate(candidate)}
-                            >
-                              <Mail className="mr-1.5 h-4 w-4" />
-                              Liên hệ
-                            </Button>
+                            
+                            {candidate.recommendedAction === "send_contact_email" ? (
+                              <Button
+                                size="sm"
+                                className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                                onClick={() => handleContactCandidate(candidate)}
+                              >
+                                <Mail className="mr-1.5 h-4 w-4" />
+                                Liên hệ ngay
+                              </Button>
+                            ) : candidate.recommendedAction === "save_cv" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 sm:flex-none border-blue-500 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                onClick={() => {
+                                  notification.info({
+                                    message: "Lưu CV",
+                                    description: "Chức năng lưu CV sẽ được triển khai",
+                                    placement: "topRight",
+                                    duration: 3
+                                  });
+                                }}
+                              >
+                                <BookOpen className="mr-1.5 h-4 w-4" />
+                                Lưu CV
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                                onClick={() => handleContactCandidate(candidate)}
+                              >
+                                <Mail className="mr-1.5 h-4 w-4" />
+                                Liên hệ
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>

@@ -10,6 +10,38 @@ export const CandidateDetailTabs = ({ candidate }) => {
     setActiveTab(tabValue);
   };
 
+  const getRecommendedActionBadge = (action) => {
+    if (!action) {
+      return (
+        <Badge className="bg-gray-100 text-gray-700 border-gray-200">
+          Không có gợi ý
+        </Badge>
+      );
+    }
+
+    switch (action) {
+      case "send_contact_email":
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            Gửi email liên hệ
+          </Badge>
+        );
+      case "save_cv":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            Lưu CV
+          </Badge>
+        );
+      case "no_recommendation":
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-700 border-gray-200">
+            Chưa đạt yêu cầu
+          </Badge>
+        );
+    }
+  };
+
   return (
     <div className="candidate-tabs">
       {/* Tabs navigation */}
@@ -33,11 +65,25 @@ export const CandidateDetailTabs = ({ candidate }) => {
             {tab.label}
           </button>
         ))}
-      </div>
-
-      {/* Evaluation tab content */}
+      </div>      {/* Evaluation tab content */}
       {activeTab === "evaluation" && (
         <div className="space-y-3">
+          {/* AI Recommendation Section */}
+          {(candidate.recommendedAction || candidate.actionReason) && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
+              <h3 className="font-semibold flex items-center gap-2 text-base mb-2">
+                <FileText className="h-5 w-5 text-primary" /> 
+                Gợi ý hành động từ AI
+              </h3>
+              <div className="flex flex-col gap-2">
+                {getRecommendedActionBadge(candidate.recommendedAction)}
+                <p className="text-sm text-blue-700 italic">
+                  {candidate.actionReason || "Không có lý do cụ thể"}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Full explanation text display */}
           <div className="p-3 bg-muted/30 rounded-md mb-4">
             <h3 className="font-semibold flex items-center gap-2 text-base mb-2">
