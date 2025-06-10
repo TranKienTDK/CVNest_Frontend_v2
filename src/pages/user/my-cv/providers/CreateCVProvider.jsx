@@ -33,6 +33,7 @@ const schema = z.object({
     github: z.string().url("URL Github không hợp lệ").optional(),
     jobStatus: z.string().optional(),
     expectedSalary: z.any(),
+    avatar: z.string().optional(),
     about: z.string().min(1, "Giới thiệu bản thân là bắt buộc"),
     hasExperience: z.boolean(),
     experiences: z.array(
@@ -135,6 +136,7 @@ export const CreateCVProvider = ({children, initialData}) => {
             github: initialData?.personalInfo?.github || "",
             jobStatus: initialData?.personalInfo?.jobStatus || "",
             expectedSalary: initialData?.personalInfo?.expectedSalary || "",
+            avatar: initialData?.personalInfo?.avatar || "",
             about: initialData?.introduction || "",
             hasExperience: initialData?.experiences?.length > 0 || false,
             experiences: initialData?.experiences?.length > 0 
@@ -386,6 +388,7 @@ export const CreateCVProvider = ({children, initialData}) => {
                 github: initialData?.personalInfo?.github || "",
                 jobStatus: initialData?.personalInfo?.jobStatus || "",
                 expectedSalary: initialData?.personalInfo?.expectedSalary || "",
+                avatar: initialData?.personalInfo?.avatar || "",
                 about: initialData?.introduction || "",
                 hasExperience: initialData?.experiences?.length > 0 || false,
                 experiences: initialData?.experiences?.length > 0 

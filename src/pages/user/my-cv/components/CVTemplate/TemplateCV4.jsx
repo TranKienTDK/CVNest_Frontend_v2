@@ -169,7 +169,7 @@ const TemplateCV4 = ({ data }) => {
         {/* Introduction */}
         <View style={{ marginBottom: 32 }}>
           <Text style={{ textAlign: 'center', fontSize: 10, color: '#4B5563' }}>
-            {htmlToText(data.introduction || "", { wordwrap: false }).trim() || "Professional summary goes here"}
+            {htmlToText(data.profile || "", { wordwrap: false }).trim() || "Professional summary goes here"}
           </Text>
         </View>
 

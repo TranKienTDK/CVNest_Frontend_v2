@@ -159,10 +159,10 @@ export const TemplateCV2 = ({ data = {} }) => {
                 border: "4 solid white",
               }}
             >
-              {data.avatar && (
+              {data.personalInfo.avatar && (
                 <Image
                   src={
-                    data.avatar || "http://localhost:5173/src/assets/temp1.jpg"
+                    data.personalInfo?.avatar || "http://localhost:5173/src/assets/temp1.jpg"
                   }
                   style={{ width: 100, height: 100, objectFit: "cover" }}
                 />
@@ -309,11 +309,11 @@ export const TemplateCV2 = ({ data = {} }) => {
             padding: 24,
           }}
         >          {/* Profile Section */}
-          {data.introduction && (
+          {data.profile && (
             <View style={{ marginBottom: 24, paddingTop: 10 }} wrap={false}>
               <SectionTitle>Profile</SectionTitle>
               <Text style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.5 }}>
-                {htmlToText(data.introduction, {
+                {htmlToText(data.profile, {
                   wordwrap: false,
                   preserveNewlines: true,
                 })
