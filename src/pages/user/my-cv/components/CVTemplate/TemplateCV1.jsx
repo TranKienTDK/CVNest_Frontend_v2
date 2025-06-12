@@ -183,97 +183,105 @@ export const TemplateCV1 = ({data = {}}) => {
                     </View>
                 </View>
 
-                <View style={{textAlign: 'center', marginVertical: 10}} wrap={false}>
-                    {/* Title */}
-                    <Text x={0} y={0}
-                          style={{
-                              fontSize: 12,
-                              color: '#4F46E5', // Indigo 600
-                              textDecoration: 'underline',
-                              marginBottom: 6,
-                          }}
-                    >
-                        Profile
-                    </Text>
-
-                    {/* Description */}
-
-                    <Text x={0} y={0} style={{maxWidth: '80%', margin: 'auto'}}>
+                {/* Profile Section - Only show if profile has content */}
+                {data.profile && data.profile.trim() && (
+                    <View style={{textAlign: 'center', marginVertical: 10}} wrap={false}>
+                        {/* Title */}
                         <Text x={0} y={0}
                               style={{
-                                  fontSize: 10,
-                                  lineHeight: 1.5,
-                                  width: '100%',
-                                  color: '#333',
-                                  textAlign: 'center',
+                                  fontSize: 12,
+                                  color: '#4F46E5', // Indigo 600
+                                  textDecoration: 'underline',
+                                  marginBottom: 6,
                               }}
                         >
-                            {htmlToText(data.profile, {
-                                wordwrap: false,
-                                preserveNewlines: true,
-                            }).split('\n').filter(line => line.trim() !== '') || "Experienced software engineer with over 8 years of expertise in developing scalable web applications. Passionate about clean code, performance optimization, and creating intuitive user experiences."}
+                            Profile
                         </Text>
-                    </Text>
-                </View>
+
+                        {/* Description */}
+                        <Text x={0} y={0} style={{maxWidth: '80%', margin: 'auto'}}>
+                            <Text x={0} y={0}
+                                  style={{
+                                      fontSize: 10,
+                                      lineHeight: 1.5,
+                                      width: '100%',
+                                      color: '#333',
+                                      textAlign: 'center',
+                                  }}
+                            >
+                                {htmlToText(data.profile, {
+                                    wordwrap: false,
+                                    preserveNewlines: true,
+                                }).split('\n').filter(line => line.trim() !== '')}
+                            </Text>
+                        </Text>
+                    </View>
+                )}
 
                 <View style={{flexDirection: 'row', gap: 20, paddingRight: 20, paddingLeft: 20}}>
                     {/* Left Column */}
                     <View style={{flex: 1}}>
-                        {/* Experience */}
-                        <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
-                            <Title>Experience</Title>
+                        {/* Experience - Only show if there are experiences */}
+                        {data.experiences && data.experiences.length > 0 && (
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
+                                <Title>Experience</Title>
 
-                            {data.experiences && data.experiences.map((experience, index) => (
-                                <View key={index}
-                                      style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
-                                      wrap={false}>
-                                    <Dot/>
-                                    <View>
-                                        <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
-                                            {experience.position || "Software Engineer"}
-                                        </Text>
-                                        <Text x={0} y={0} style={{fontSize: 9}}>
-                                            {experience.company || "Company"}
-                                        </Text>
-                                        <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
-                                            {htmlToText(experience.description, {
-                                                wordwrap: false,
-                                                preserveNewlines: true,
-                                            }).split('\n').filter(line => line.trim() !== '') || "Lead development of cloud-based enterprise solutions. Implemented CI/CD pipelines and reduced deployment time by 40%."}
-                                        </Text>
+                                {data.experiences.map((experience, index) => (
+                                    <View key={index}
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
+                                                {experience.position || "Position"}
+                                            </Text>
+                                            <Text x={0} y={0} style={{fontSize: 9}}>
+                                                {experience.company || "Company"}
+                                            </Text>
+                                            {experience.description && (
+                                                <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
+                                                    {htmlToText(experience.description, {
+                                                        wordwrap: false,
+                                                        preserveNewlines: true,
+                                                    }).split('\n').filter(line => line.trim() !== '')}
+                                                </Text>
+                                            )}
+                                        </View>
                                     </View>
-                                </View>
-                            ))}
-                        </View>
+                                ))}
+                            </View>
+                        )}
 
-                        {/* Education */}
-                        <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
-                            <Title>Education</Title>
+                        {/* Education - Only show if there are education entries */}
+                        {data.education && data.education.length > 0 && (
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
+                                <Title>Education</Title>
 
-                            {data.education && data.education.map((education, index) => {
-                                console.log("education: ", education);
-                                return (
-                                <View key={index}
-                                      style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
-                                      wrap={false}>
-                                    <Dot/>
-                                    <View>
-                                        <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
-                                            {education.field || "Computer Science"}
-                                        </Text>
-                                        <Text x={0} y={0} style={{fontSize: 9}}>
-                                            {education.school || "State University"}
-                                        </Text>
-                                        <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
-                                            {htmlToText(education.description, {
-                                                wordwrap: false,
-                                                preserveNewlines: true,
-                                            }).split('\n').filter(line => line.trim() !== '') || "Graduated with honors. Participated in ACM programming competitions."}
-                                        </Text>
+                                {data.education.map((education, index) => (
+                                    <View key={index}
+                                          style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6}}
+                                          wrap={false}>
+                                        <Dot/>
+                                        <View>
+                                            <Text x={0} y={0} style={{fontSize: 10, fontWeight: 'bold'}}>
+                                                {education.field || "Field of Study"}
+                                            </Text>
+                                            <Text x={0} y={0} style={{fontSize: 9}}>
+                                                {education.school || "School"}
+                                            </Text>
+                                            {education.description && (
+                                                <Text x={0} y={0} style={{fontSize: 9, marginTop: 2}}>
+                                                    {htmlToText(education.description, {
+                                                        wordwrap: false,
+                                                        preserveNewlines: true,
+                                                    }).split('\n').filter(line => line.trim() !== '')}
+                                                </Text>
+                                            )}
+                                        </View>
                                     </View>
-                                </View>
-                            )})}
-                        </View>
+                                ))}
+                            </View>
+                        )}
 
                         {data.projects?.some(project => !!project.project) && (
                             <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
@@ -415,25 +423,27 @@ export const TemplateCV1 = ({data = {}}) => {
 
                     {/* Right Column */}
                     <View style={{flex: 1}}>
-                        {/* Skills 3/5*100 */}
-                        <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
-                            <Title>Skills</Title>
-                            {data.skills && data.skills.map((skill, index) => (
-                                <View key={index} style={{marginBottom: 4}} wrap={false}>
-                                    <Text x={0} y={0} style={{fontSize: 9}}>{skill.name || skill.skill}</Text>
-                                    <View style={{height: 5, backgroundColor: '#E5E7EB', borderRadius: 2}}>
-                                        <View
-                                            style={{
-                                                width: `${(((skill.rate !== undefined ? skill.rate : 0) / 5) * 100)}%`,
-                                                height: 5,
-                                                backgroundColor: '#4F46E5',
-                                                borderRadius: 2,
-                                            }}
-                                        />
+                        {/* Skills - Only show if there are skills */}
+                        {data.skills && data.skills.length > 0 && (
+                            <View style={{marginBottom: 10, paddingTop: 10}} wrap={false}>
+                                <Title>Skills</Title>
+                                {data.skills.map((skill, index) => (
+                                    <View key={index} style={{marginBottom: 4}} wrap={false}>
+                                        <Text x={0} y={0} style={{fontSize: 9}}>{skill.name || skill.skill}</Text>
+                                        <View style={{height: 5, backgroundColor: '#E5E7EB', borderRadius: 2}}>
+                                            <View
+                                                style={{
+                                                    width: `${(((skill.rate !== undefined ? skill.rate : 0) / 5) * 100)}%`,
+                                                    height: 5,
+                                                    backgroundColor: '#4F46E5',
+                                                    borderRadius: 2,
+                                                }}
+                                            />
+                                        </View>
                                     </View>
-                                </View>
-                            ))}
-                        </View>
+                                ))}
+                            </View>
+                        )}
 
                         {/* Languages */}
                         {data.languages?.some(lang => !!lang.language) && (

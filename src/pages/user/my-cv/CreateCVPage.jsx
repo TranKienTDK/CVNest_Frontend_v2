@@ -9,7 +9,7 @@ import {
 import OtherInfoSection from "@/pages/user/my-cv/components/OtherInfoSection.jsx";
 import PersonalInfoForm from "@/pages/user/my-cv/components/PersonalInfoForm.jsx";
 import React, { useEffect, useState } from "react";
-import { CreateCVProvider } from "@/pages/user/my-cv/providers/CreateCVProvider";
+import { CreateCVProvider, useCreateCV } from "@/pages/user/my-cv/providers/CreateCVProvider";
 import { useNavigate } from "react-router-dom";
 import logo1 from "../../../assets/temp1.jpg";
 import logo2 from "../../../assets/temp2.jpg";
@@ -65,6 +65,27 @@ function CreateCVPage() {
       navigate(ROUTES.CREATENAMECV);
     }
   }, []);
+
+  // Function to sync current form data with localStorage and cvData
+  const syncDataFromForm = () => {
+    try {
+      const draft = localStorage.getItem("cv_draft");
+      if (draft) {
+        const updatedData = JSON.parse(draft);
+        setCvData(updatedData);
+        return updatedData;
+      }
+    } catch (error) {
+      console.error("Error syncing data from localStorage:", error);
+    }
+    return cvData;
+  };
+
+  // Handle preview modal with fresh data
+  const handleShowPreview = () => {
+    syncDataFromForm();
+    setShowPreviewModal(true);
+  };
 
   const currentTemplate = templates.find((t) => t.id === selectedTemplate);
   const currentTemplateName = currentTemplate?.name || "";
@@ -149,7 +170,7 @@ function CreateCVPage() {
                       {currentTemplateName}
                     </p>
                     <button
-                      onClick={() => setShowPreviewModal(true)}
+                      onClick={handleShowPreview}
                       className="text-sm text-white bg-[#D34127] px-3 py-2 rounded hover:bg-[#b83520] transition"
                     >
                       Xem trước CV

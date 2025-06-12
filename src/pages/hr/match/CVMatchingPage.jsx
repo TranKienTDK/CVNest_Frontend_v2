@@ -359,12 +359,11 @@ const CVMatchingPage = () => {
     const { signal } = abortControllerRef.current;
     let progressInterval = null;
 
-    try {
-      await updateLoadingState(0, 10);
+    try {      await updateLoadingState(0, 10);
       await updateLoadingState(1, 25); const apiPromise = axios.post(
         `http://localhost:8000/match-all/${jobId}`,
         {},
-        { signal, timeout: 40000 }
+        { signal, timeout: 300000 }
       );
 
       await updateLoadingState(2, 40);

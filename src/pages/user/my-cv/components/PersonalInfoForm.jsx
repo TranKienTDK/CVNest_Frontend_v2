@@ -291,12 +291,12 @@ function PersonalInfoForm() {
                 } else {
                     // Real API call
                     await cvAPI.updateCV(id, payload);
-                    toast.success("CV updated successfully!");
+                    toast.success("CV được cập nhật thành công");
                     navigate(ROUTES.CVMANAGEMENT);
                 }
             } catch (err) {
-                console.error("Error updating CV:", err);
-                toast.error("Failed to update CV. Please try again: " + (err.response?.data?.message || err.message));
+                console.error("Lỗi khi cập nhật CV:", err);
+                toast.error("Lỗi khi cập nhật CV. Vui lòng thử lại " + (err.response?.data?.message || err.message));
             }
         }
     })

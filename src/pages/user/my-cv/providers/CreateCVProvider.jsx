@@ -5,7 +5,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {v4} from "uuid";
 import dayjs from "dayjs";
-import {CreateCVContext} from "@/pages/user/my-cv/contexts/CreateCVContext.js";
+import {CreateCVContext, useCreateCV} from "@/pages/user/my-cv/contexts/CreateCVContext.js";
 import {
     itemDefaultActivity,
     itemDefaultCertificate,
@@ -511,6 +511,55 @@ export const CreateCVProvider = ({children, initialData}) => {
         }
     }, [initialData, formCreate]);
 
+    // Auto-save mechanism
+    useEffect(() => {
+        const subscription = formCreate.watch((data) => {
+            try {
+                const draft = localStorage.getItem("cv_draft");
+                if (draft) {
+                    const currentDraft = JSON.parse(draft);
+                    
+                    // Create updated draft with form data
+                    const updatedDraft = {
+                        ...currentDraft,
+                        personalInfo: {
+                            ...currentDraft.personalInfo,
+                            fullname: data.fullname || currentDraft.personalInfo?.fullname,
+                            position: data.position || currentDraft.personalInfo?.position,
+                            email: data.email || currentDraft.personalInfo?.email,
+                            phone: data.phone || currentDraft.personalInfo?.phone,
+                            gender: data.gender || currentDraft.personalInfo?.gender,
+                            dob: data.dob || currentDraft.personalInfo?.dob,
+                            city: data.city || currentDraft.personalInfo?.city,
+                            address: data.address || currentDraft.personalInfo?.address,
+                            linkedin: data.linkedin || currentDraft.personalInfo?.linkedin,
+                            github: data.github || currentDraft.personalInfo?.github,
+                            avatar: data.avatar || currentDraft.personalInfo?.avatar,
+                        },
+                        profile: data.about || currentDraft.profile,
+                        introduction: data.about || currentDraft.introduction,
+                        experiences: data.experiences || currentDraft.experiences,
+                        skills: data.skills || currentDraft.skills,
+                        education: data.educations || currentDraft.education,
+                        projects: data.projects || currentDraft.projects,
+                        languages: data.languages || currentDraft.languages,
+                        interests: data.interests || currentDraft.interests,
+                        certificates: data.certificates || currentDraft.certificates,
+                        activities: data.activities || currentDraft.activities,
+                        consultants: data.consultants || currentDraft.consultants,
+                        others: data.others || currentDraft.others,
+                    };
+                    
+                    localStorage.setItem("cv_draft", JSON.stringify(updatedDraft));
+                }
+            } catch (error) {
+                console.error("Error auto-saving CV data:", error);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [formCreate]);
+
     const value = {
         formCreate,
         validationIssues,
@@ -524,3 +573,6 @@ export const CreateCVProvider = ({children, initialData}) => {
         </CreateCVContext.Provider>
     );
 };
+
+// Export the hook for convenience
+export { useCreateCV };

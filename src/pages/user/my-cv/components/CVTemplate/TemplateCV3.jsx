@@ -292,106 +292,35 @@ const TemplateCV3 = ({ data }) => {
               </View>
             )}
           </View>
-        </View>
-
-        {/* Introduction */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About Me</Text>
-          <Text style={styles.content}>
-            {htmlToText(data.profile || "", { wordwrap: false }).trim() || "Professional summary goes here"}
-          </Text>
-        </View>
-
-        {/* Work Experience */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Experience</Text>
-          {(data.workExperience || data.experiences || []).map((exp, index) => (
-            <View key={index} style={styles.workItem}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={styles.jobTitle}>{exp.position}</Text>
-                <Text style={styles.duration}>
-                  {exp.duration ||
-                    (exp.startDate && dayjs(exp.startDate).format("MM/YYYY")) +
-                    ((exp.startDate && exp.endDate) ? " - " : "") +
-                    (exp.endDate ? dayjs(exp.endDate).format("MM/YYYY") : "")}
-                </Text>
-              </View>
-              <Text style={styles.companyName}>{exp.company}</Text>              <Text style={styles.description}>
-                {htmlToText(exp.description || "", { wordwrap: false, preserveNewlines: false }).trim() || "Job description"}
-              </Text>
-              <View style={styles.tagContainer}>
-                {renderTechnologies(exp.technologies).map((tech, i) => (
-                  <Text key={i} style={styles.tag}>
-                    • {tech}
-                  </Text>
-                ))}
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Education */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Education</Text>
-          {(data.education || []).map((edu, index) => (
-            <View key={index} style={styles.workItem}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={styles.companyName}>{edu.school}</Text>
-                <Text style={styles.duration}>
-                  {edu.duration ||
-                    (edu.startDate && dayjs(edu.startDate).format("MM/YYYY")) +
-                    ((edu.startDate && edu.endDate) ? " - " : "") +
-                    (edu.endDate ? dayjs(edu.endDate).format("MM/YYYY") : "Present")}
-                </Text>
-              </View>
-              <Text style={styles.jobTitle}>{edu.degree || edu.field}</Text>
-              <Text style={styles.description}>
-                {htmlToText(edu.description || "", { wordwrap: false }).trim() || "Education description"}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Skills */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Skills</Text>
-          <View style={styles.skillRow}>
-            {(data.skills || []).map((skill, index) => (
-              <View key={index} style={styles.skillItem}>
-                <Text style={styles.skillName}>
-                  {skill.name || skill.skill}
-                </Text>
-                <View style={styles.skillStars}>
-                  {[1, 2, 3, 4, 5].map((_, i) => (
-                    <StarIcon key={i} filled={i < (skill.rating || skill.rate || 0)} />
-                  ))}
-                </View>
-              </View>
-            ))}
+        </View>        {/* Introduction - Only show if profile has content */}
+        {data.profile && htmlToText(data.profile || "", { wordwrap: false }).trim() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>About Me</Text>
+            <Text style={styles.content}>
+              {htmlToText(data.profile, { wordwrap: false }).trim()}
+            </Text>
           </View>
-        </View>
-
-        <Text break>{"\u00A0"}</Text>
-
-        <View style={styles.twoColumnContainer}>
-          {/* Projects and Certificates in left column */}
-          <View style={styles.column}>
-            <Text style={styles.sectionTitle}>Projects</Text>
-            {(data.projects || []).map((project, index) => (
+        )}        {/* Work Experience - Only show if there are experiences */}
+        {(data.workExperience || data.experiences || []).length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Work Experience</Text>
+            {(data.workExperience || data.experiences || []).map((exp, index) => (
               <View key={index} style={styles.workItem}>
-                <Text style={styles.companyName}>{project.name || project.project}</Text>
-                {(project.startDate || project.endDate) && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={styles.jobTitle}>{exp.position || "Position"}</Text>
                   <Text style={styles.duration}>
-                    {(project.startDate && dayjs(project.startDate).format("MM/YYYY")) +
-                      ((project.startDate && project.endDate) ? " - " : "") +
-                      (project.endDate ? dayjs(project.endDate).format("MM/YYYY") : "Present")}
+                    {exp.duration ||
+                      (exp.startDate && dayjs(exp.startDate).format("MM/YYYY")) +
+                      ((exp.startDate && exp.endDate) ? " - " : "") +
+                      (exp.endDate ? dayjs(exp.endDate).format("MM/YYYY") : "")}
                   </Text>
-                )}
+                </View>
+                <Text style={styles.companyName}>{exp.company || "Company"}</Text>
                 <Text style={styles.description}>
-                  {htmlToText(project.description || "", { wordwrap: false }).trim() || "Project description"}
+                  {htmlToText(exp.description || "", { wordwrap: false, preserveNewlines: false }).trim() || "Job description"}
                 </Text>
                 <View style={styles.tagContainer}>
-                  {renderTechnologies(project.technologies).map((tech, i) => (
+                  {renderTechnologies(exp.technologies).map((tech, i) => (
                     <Text key={i} style={styles.tag}>
                       • {tech}
                     </Text>
@@ -399,79 +328,171 @@ const TemplateCV3 = ({ data }) => {
                 </View>
               </View>
             ))}
-
-            {/* Certificates */}
-            {data.certificates?.some(cert => !!cert.certificate) && (
-              <>
-                <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Certificates</Text>
-                {data.certificates.map((cert, index) => (
-                  <View key={index} style={styles.workItem}>
-                    <Text style={styles.companyName}>{cert.certificate}</Text>
-                    {cert.date && (
-                      <Text style={styles.duration}>
-                        {dayjs(cert.date).format("MM/YYYY")}
-                      </Text>
-                    )}
-                    {cert.description && (
-                      <Text style={styles.description}>
-                        {htmlToText(cert.description || "", { wordwrap: false }).trim()}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </>
-            )}
           </View>
-
-          {/* Languages  */}
-          <View style={styles.column}>
-            <Text style={styles.sectionTitle}>Languages</Text>
-            {(data.languages || []).map((lang, index) => (
-              <Text key={index} style={styles.content}>
-                {lang.language} - {lang.proficiency || lang.level}
-              </Text>
-            ))}
-
-            <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Hobbies & Activities</Text>
-
-            {/* Hobbies section */}
-            {hasContentInArray(data.hobbies || data.interests) && (
-              <View style={styles.tagContainer}>
-                {Array.isArray(data.hobbies || data.interests) && ensureArray(data.hobbies || data.interests).map((hobby, index) => (
-                  <Text key={index} style={styles.tag}>
-                    {typeof hobby === 'object' ? hobby.interest : hobby}
+        )}        {/* Education - Only show if there are education entries */}
+        {(data.education || []).length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Education</Text>
+            {(data.education || []).map((edu, index) => (
+              <View key={index} style={styles.workItem}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={styles.companyName}>{edu.school || "School"}</Text>
+                  <Text style={styles.duration}>
+                    {edu.duration ||
+                      (edu.startDate && dayjs(edu.startDate).format("MM/YYYY")) +
+                      ((edu.startDate && edu.endDate) ? " - " : "") +
+                      (edu.endDate ? dayjs(edu.endDate).format("MM/YYYY") : "Present")}
                   </Text>
-                ))}
+                </View>
+                <Text style={styles.jobTitle}>{edu.degree || edu.field || "Field of Study"}</Text>
+                <Text style={styles.description}>
+                  {htmlToText(edu.description || "", { wordwrap: false }).trim() || "Education description"}
+                </Text>
               </View>
-            )}
-
-            {/* Activities section */}
-            {hasContentInArray(data.activities) && (
-              <View style={styles.tagContainer}>
-                {Array.isArray(data.activities) && data.activities.map((activity, index) => (
-                  <View key={index} style={styles.workItem}>
-                    <Text style={styles.skillName}>
-                      • {activity.activity || activity.name}
-                    </Text>
-                    {activity.description && (
-                      <Text style={styles.description}>
-                        {htmlToText(activity.description || "", { wordwrap: false }).trim()}
-                      </Text>
-                    )}
-                    {(activity.startDate || activity.endDate) && (
-                      <Text style={styles.duration}>
-                        {activity.startDate && dayjs(activity.startDate).format("MM/YYYY")}
-                        {activity.startDate && (activity.endDate || activity.isCurrent === true) && " - "}
-                        {activity.endDate ? dayjs(activity.endDate).format("MM/YYYY") :
-                          activity.isCurrent === false ? "" : "Now"}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
+            ))}
           </View>
-        </View>
+        )}        {/* Skills - Only show if there are skills */}
+        {(data.skills || []).length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Skills</Text>
+            <View style={styles.skillRow}>
+              {(data.skills || []).map((skill, index) => (
+                <View key={index} style={styles.skillItem}>
+                  <Text style={styles.skillName}>
+                    {skill.name || skill.skill}
+                  </Text>
+                  <View style={styles.skillStars}>
+                    {[1, 2, 3, 4, 5].map((_, i) => (
+                      <StarIcon key={i} filled={i < (skill.rating || skill.rate || 0)} />
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}        <Text break>{"\u00A0"}</Text>
+
+        {/* Two Column Section - Only show if there's content for either column */}
+        {((data.projects || []).length > 0 || 
+          data.certificates?.some(cert => !!cert.certificate) || 
+          (data.languages || []).length > 0 || 
+          hasContentInArray(data.hobbies || data.interests) || 
+          hasContentInArray(data.activities)) && (
+          <View style={styles.twoColumnContainer}>
+            {/* Projects and Certificates in left column */}
+            <View style={styles.column}>
+              {/* Projects - Only show if there are projects */}
+              {(data.projects || []).length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Projects</Text>
+                  {(data.projects || []).map((project, index) => (
+                    <View key={index} style={styles.workItem}>
+                      <Text style={styles.companyName}>{project.name || project.project || "Project Name"}</Text>
+                      {(project.startDate || project.endDate) && (
+                        <Text style={styles.duration}>
+                          {(project.startDate && dayjs(project.startDate).format("MM/YYYY")) +
+                            ((project.startDate && project.endDate) ? " - " : "") +
+                            (project.endDate ? dayjs(project.endDate).format("MM/YYYY") : "Present")}
+                        </Text>
+                      )}
+                      <Text style={styles.description}>
+                        {htmlToText(project.description || "", { wordwrap: false }).trim() || "Project description"}
+                      </Text>
+                      <View style={styles.tagContainer}>
+                        {renderTechnologies(project.technologies).map((tech, i) => (
+                          <Text key={i} style={styles.tag}>
+                            • {tech}
+                          </Text>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </>
+              )}
+
+              {/* Certificates */}
+              {data.certificates?.some(cert => !!cert.certificate) && (
+                <>
+                  <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Certificates</Text>
+                  {data.certificates.map((cert, index) => (
+                    <View key={index} style={styles.workItem}>
+                      <Text style={styles.companyName}>{cert.certificate}</Text>
+                      {cert.date && (
+                        <Text style={styles.duration}>
+                          {dayjs(cert.date).format("MM/YYYY")}
+                        </Text>
+                      )}
+                      {cert.description && (
+                        <Text style={styles.description}>
+                          {htmlToText(cert.description || "", { wordwrap: false }).trim()}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </>
+              )}
+            </View>
+
+            {/* Languages */}
+            <View style={styles.column}>
+              {/* Languages - Only show if there are languages */}
+              {(data.languages || []).length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Languages</Text>
+                  {(data.languages || []).map((lang, index) => (
+                    <Text key={index} style={styles.content}>
+                      {lang.language} - {lang.proficiency || lang.level}
+                    </Text>
+                  ))}
+                </>
+              )}
+
+              {/* Hobbies & Activities - Only show if there are hobbies or activities */}
+              {(hasContentInArray(data.hobbies || data.interests) || hasContentInArray(data.activities)) && (
+                <>
+                  <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Hobbies & Activities</Text>
+
+                  {/* Hobbies section */}
+                  {hasContentInArray(data.hobbies || data.interests) && (
+                    <View style={styles.tagContainer}>
+                      {Array.isArray(data.hobbies || data.interests) && ensureArray(data.hobbies || data.interests).map((hobby, index) => (
+                        <Text key={index} style={styles.tag}>
+                          {typeof hobby === 'object' ? hobby.interest : hobby}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Activities section */}
+                  {hasContentInArray(data.activities) && (
+                    <View style={styles.tagContainer}>
+                      {Array.isArray(data.activities) && data.activities.map((activity, index) => (
+                        <View key={index} style={styles.workItem}>
+                          <Text style={styles.skillName}>
+                            • {activity.activity || activity.name}
+                          </Text>
+                          {activity.description && (
+                            <Text style={styles.description}>
+                              {htmlToText(activity.description || "", { wordwrap: false }).trim()}
+                            </Text>
+                          )}
+                          {(activity.startDate || activity.endDate) && (
+                            <Text style={styles.duration}>
+                              {activity.startDate && dayjs(activity.startDate).format("MM/YYYY")}
+                              {activity.startDate && (activity.endDate || activity.isCurrent === true) && " - "}
+                              {activity.endDate ? dayjs(activity.endDate).format("MM/YYYY") :
+                                activity.isCurrent === false ? "" : "Now"}
+                            </Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          </View>
+        )}
       </Page>
     </Document>
   );

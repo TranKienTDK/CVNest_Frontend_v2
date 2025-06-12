@@ -173,14 +173,12 @@ const TemplateCV4 = ({ data }) => {
           </Text>
         </View>
 
-        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />
-
-        {/* Work Experience */}
+        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />        {/* Work Experience */}
         <View style={{ marginBottom: 32 }}>
           <SectionTitle>Experience</SectionTitle>
           
-          {(data.workExperience || data.experiences || []).map((exp, index) => (
-            <View key={index} style={{ marginBottom: 24 }}>
+          {(data.workExperience || data.experiences || []).map((exp, index, array) => (
+            <View key={index} style={{ marginBottom: index === array.length - 1 ? 0 : 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 11, fontWeight: 'medium', color: '#1F2937' }}>
                   {exp.position || "Position"}
@@ -213,14 +211,12 @@ const TemplateCV4 = ({ data }) => {
           ))}
         </View>
 
-        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />
-
-        {/* Education */}
+        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />        {/* Education */}
         <View style={{ marginBottom: 32 }}>
           <SectionTitle>Education</SectionTitle>
           
-          {(data.education || []).map((edu, index) => (
-            <View key={index} style={{ marginBottom: 16 }}>
+          {(data.education || []).map((edu, index, array) => (
+            <View key={index} style={{ marginBottom: index === array.length - 1 ? 0 : 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 11, fontWeight: 'medium', color: '#1F2937' }}>
                   {edu.school || "University"}
@@ -246,15 +242,13 @@ const TemplateCV4 = ({ data }) => {
           ))}
         </View>
 
-        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />
-
-        {/* Skills */}
+        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />        {/* Skills */}
         <View style={{ marginBottom: 32 }}>
           <SectionTitle>Skills</SectionTitle>
           
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {(data.skills || []).map((skill, index) => (
-              <View key={index} style={{ width: '33%', alignItems: 'center', marginBottom: 12 }}>
+            {(data.skills || []).map((skill, index, array) => (
+              <View key={index} style={{ width: '33%', alignItems: 'center', marginBottom: index >= array.length - 3 ? 0 : 12 }}>
                 <Text style={{ fontSize: 10, fontWeight: 'medium', color: '#4B5563' }}>
                   {skill.name || skill.skill || "Skill"}
                 </Text>
@@ -272,15 +266,13 @@ const TemplateCV4 = ({ data }) => {
 
         <Text break>{"\u00A0"}</Text>
 
-        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />
-
-        {/* Projects */}
+        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />        {/* Projects */}
         {hasContentInArray(data.projects) && (
           <View style={{ marginBottom: 32 }}>
             <SectionTitle>Projects</SectionTitle>
             
-            {(data.projects || []).map((project, index) => (
-              <View key={index} style={{ marginBottom: 16 }}>
+            {(data.projects || []).map((project, index, array) => (
+              <View key={index} style={{ marginBottom: index === array.length - 1 ? 0 : 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 11, fontWeight: 'medium', color: '#1F2937' }}>
                     {project.name || project.project || "Project Name"}
@@ -306,15 +298,13 @@ const TemplateCV4 = ({ data }) => {
           </View>
         )}
 
-        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />
-
-        {/* Certificates */}
+        <View style={{ height: 1, backgroundColor: '#D1D5DB', marginBottom: 24 }} />        {/* Certificates */}
         {data.certificates?.some(cert => !!cert.certificate) && (
           <View style={{ marginBottom: 32 }}>
             <SectionTitle>Certificates</SectionTitle>
             
-            {data.certificates.map((cert, index) => (
-              <View key={index} style={{ marginBottom: 12 }}>
+            {data.certificates.map((cert, index, array) => (
+              <View key={index} style={{ marginBottom: index === array.length - 1 ? 0 : 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 11, fontWeight: 'medium', color: '#1F2937' }}>
                     {cert.certificate || "Certificate Name"}
@@ -343,14 +333,13 @@ const TemplateCV4 = ({ data }) => {
           <>
             {data.languages?.some(lang => lang.language && lang.language.trim() !== '') && 
               hasContentInArray(data.hobbies || data.interests) ? (
-              <View style={{ flexDirection: 'row' }}>
-                <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row' }}>                <View style={{ flex: 1 }}>
                   <SectionTitle>Languages</SectionTitle>
                   <View style={{ alignItems: 'center' }}>
                     {(data.languages || [])
                       .filter(lang => lang.language && lang.language.trim() !== '')
-                      .map((lang, index) => (
-                        <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: 4 }}>
+                      .map((lang, index, array) => (
+                        <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: index === array.length - 1 ? 0 : 4 }}>
                           {lang.language} - {lang.proficiency || lang.level || "Level"}
                         </Text>
                       ))}
@@ -363,8 +352,8 @@ const TemplateCV4 = ({ data }) => {
                     {ensureArray(data.hobbies || data.interests)
                       .filter(hobby => hobby && (typeof hobby === 'string' ? hobby.trim() !== '' : 
                         (hobby.interest && hobby.interest.trim() !== '')))
-                      .map((hobby, index) => (
-                        <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: 4 }}>
+                      .map((hobby, index, array) => (
+                        <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: index === array.length - 1 ? 0 : 4 }}>
                           {typeof hobby === 'object' ? hobby.interest : hobby}
                         </Text>
                       ))}
@@ -372,15 +361,14 @@ const TemplateCV4 = ({ data }) => {
                 </View>
               </View>
             ) : (
-              <View>
-                {data.languages?.some(lang => lang.language && lang.language.trim() !== '') && (
+              <View>                {data.languages?.some(lang => lang.language && lang.language.trim() !== '') && (
                   <>
                     <SectionTitle>Languages</SectionTitle>
                     <View style={{ alignItems: 'center' }}>
                       {(data.languages || [])
                         .filter(lang => lang.language && lang.language.trim() !== '')
-                        .map((lang, index) => (
-                          <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: 4 }}>
+                        .map((lang, index, array) => (
+                          <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: index === array.length - 1 ? 0 : 4 }}>
                             {lang.language} - {lang.proficiency || lang.level || "Level"}
                           </Text>
                         ))}
@@ -395,8 +383,8 @@ const TemplateCV4 = ({ data }) => {
                       {ensureArray(data.hobbies || data.interests)
                         .filter(hobby => hobby && (typeof hobby === 'string' ? hobby.trim() !== '' : 
                           (hobby.interest && hobby.interest.trim() !== '')))
-                        .map((hobby, index) => (
-                          <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: 4 }}>
+                        .map((hobby, index, array) => (
+                          <Text key={index} style={{ fontSize: 10, color: '#4B5563', marginBottom: index === array.length - 1 ? 0 : 4 }}>
                             {typeof hobby === 'object' ? hobby.interest : hobby}
                           </Text>
                         ))}
@@ -417,14 +405,13 @@ const TemplateCV4 = ({ data }) => {
             <View style={{ height: 1, backgroundColor: '#D1D5DB', marginTop: 24, marginBottom: 24 }} />
             <View style={{ marginBottom: 32 }}>
               <SectionTitle>Activities</SectionTitle>
-              
-              {data.activities
+                {data.activities
                 .filter(activity => 
                   (activity.activity && activity.activity.trim() !== '') || 
                   (activity.name && activity.name.trim() !== '')
                 )
-                .map((activity, index) => (
-                  <View key={index} style={{ marginBottom: 12 }}>
+                .map((activity, index, array) => (
+                  <View key={index} style={{ marginBottom: index === array.length - 1 ? 0 : 12 }}>
                     <Text style={{ fontSize: 11, fontWeight: 'medium', color: '#1F2937' }}>
                       {activity.activity || activity.name || "Activity"}
                     </Text>
