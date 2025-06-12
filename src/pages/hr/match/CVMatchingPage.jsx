@@ -12,11 +12,13 @@ import TemplateCV3 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV3";
 import TemplateCV4 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV4";
 import { PDFViewer } from "@react-pdf/renderer";
 import cvAPI from "@/api/cv";
+import evaluationAPI from "@/api/evaluation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./TabsComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmailComposeModal } from "../email/EmailComposeModal";
 import { getEmailPreview, sendEmail } from "../../../api/email";
+import translate from "google-translate-api-browser";
 import {
   Select,
   SelectContent,
@@ -227,6 +229,7 @@ const CVMatchingPage = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingExistingEvaluations, setLoadingExistingEvaluations] = useState(false);
   const [error, setError] = useState(null);
   const [loadingStep, setLoadingStep] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -249,8 +252,64 @@ const CVMatchingPage = () => {
   // CV Preview states
   const [previewCV, setPreviewCV] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [loadingCV, setLoadingCV] = useState(false);
-  const [cvDetailsCache, setCvDetailsCache] = useState({});
+  const [loadingCV, setLoadingCV] = useState(false);  const [cvDetailsCache, setCvDetailsCache] = useState({});
+  
+  // Translation cache to avoid repeated API calls
+  const translationCache = useRef({});
+  // Hàm dịch text từ tiếng Anh sang tiếng Việt với retry và timeout
+  const translateText = async (text, retries = 2) => {
+    if (!text || typeof text !== "string" || text.trim() === "") {
+      return text;
+    }    // Kiểm tra cache trước
+    if (translationCache.current[text]) {
+      return translationCache.current[text];
+    }
+
+    try {
+      // Add timeout for translation
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Translation timeout')), 10000)
+      );
+      
+      const translationPromise = translate(text, { from: 'en', to: 'vi' });
+      
+      const result = await Promise.race([translationPromise, timeoutPromise]);
+      const translatedText = result.text;
+      
+      // Lưu vào cache
+      translationCache.current[text] = translatedText;
+      
+      return translatedText;
+    } catch (error) {
+      console.warn(`Translation failed for text (${3 - retries} retries left):`, text, error);
+      
+      // Retry logic
+      if (retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+        return translateText(text, retries - 1);
+      }
+      
+      // If all retries fail, return original text
+      console.error("Translation failed after all retries, returning original text");
+      return text;
+    }
+  };
+
+  // Hàm dịch object có nhiều text fields
+  const translateTextFields = async (obj, fieldsToTranslate = []) => {
+    if (!obj || typeof obj !== "object") return obj;
+    
+    const translatedObj = { ...obj };
+    
+    for (const field of fieldsToTranslate) {
+      if (obj[field] && typeof obj[field] === "string") {
+        translatedObj[field] = await translateText(obj[field]);
+      }
+    }
+    
+    return translatedObj;
+  };
+
   // CV Preview function
   const handlePreviewCV = async (cvId) => {
     try {
@@ -281,11 +340,35 @@ const CVMatchingPage = () => {
     } finally {
       setLoadingCV(false);
     }
+  };  // Hàm load evaluations từ DB khi trang được load
+  const loadExistingEvaluations = async (jobId) => {
+    try {
+      setLoadingExistingEvaluations(true);
+      const evaluationsResponse = await evaluationAPI.getEvaluationsByJobId(jobId);
+      console.log("Loaded existing evaluations:", evaluationsResponse);
+      
+      if (evaluationsResponse.data && Array.isArray(evaluationsResponse.data)) {
+        const transformedData = await transformEvaluationsToDisplayFormat(evaluationsResponse.data);
+        setCandidates(transformedData);
+      } else {
+        setCandidates([]);
+      }
+    } catch (error) {
+      console.error("Error loading existing evaluations:", error);
+      // Không hiển thị error cho việc load existing evaluations
+      setCandidates([]);
+    } finally {
+      setLoadingExistingEvaluations(false);
+    }
   };
 
   useEffect(() => {
     if (location.state && location.state.job) {
       setSelectedJob(location.state.job);
+      // Load existing evaluations when job is selected
+      if (location.state.job.id) {
+        loadExistingEvaluations(location.state.job.id);
+      }
     }
   }, [location.state]);
 
@@ -342,6 +425,88 @@ const CVMatchingPage = () => {
       console.error("Error getting match level from text:", text, error);
     }
     return "medium";
+  };  // Hàm chuyển đổi dữ liệu từ API evaluations sang format hiển thị
+  const transformEvaluationsToDisplayFormat = async (evaluationsData) => {
+    const transformedData = await Promise.all(
+      evaluationsData.map(async (evaluation, index) => {
+        const explanationText = evaluation.explanation || "Không có giải thích chi tiết.";
+        
+        // Dịch explanation và actionReason
+        const translatedExplanation = await translateText(explanationText);
+        const translatedActionReason = evaluation.actionReason ? await translateText(evaluation.actionReason) : "Không có gợi ý hành động";
+        
+        const explanationDetails = parseExplanationToDetails(translatedExplanation);
+
+        // Transform skills từ array string sang format hiển thị
+        const skills = Array.isArray(evaluation.skills) 
+          ? evaluation.skills.map(skill => ({
+              name: skill,
+              match: "medium" // Default match level cho skills
+            }))
+          : explanationDetails.skills ? parseSkills(explanationDetails.skills) : [];
+
+        const experience = explanationDetails.experience
+          ? [{ title: "Work Experience Summary", company: "Details in explanation", duration: "Based on CV/JD", match: getMatchLevel(explanationDetails.experience) }]
+          : [];
+        
+        const education = explanationDetails.education
+          ? [{ degree: "Education Summary", institution: "Details in explanation", year: "N/A", match: getMatchLevel(explanationDetails.education) }]
+          : [];
+
+        // Lấy thông tin CV để có email và phone
+        let email = "N/A";
+        let phone = "N/A";
+        let candidateName = `Candidate (CV ID: ${evaluation.cvId.substring(0, 6)})`;
+        
+        try {
+          let cvData = null;
+          
+          // Kiểm tra cache trước
+          if (cvDetailsCache[evaluation.cvId]) {
+            cvData = cvDetailsCache[evaluation.cvId];
+          } else {
+            // Call API để lấy thông tin CV
+            const response = await cvAPI.getDetailCv(evaluation.cvId);
+            cvData = response.data.data;
+            
+            // Lưu vào cache để sử dụng sau
+            setCvDetailsCache(prev => ({
+              ...prev,
+              [evaluation.cvId]: cvData
+            }));
+          }
+          
+          if (cvData && cvData.info) {
+            email = cvData.info.email || "N/A";
+            phone = cvData.info.phone || "N/A";
+            if (cvData.info.fullName) {
+              candidateName = cvData.info.fullName;
+            }
+          }
+        } catch (error) {
+          console.warn("Could not get CV details for cvId:", evaluation.cvId, error);
+        }
+
+        return {
+          id: evaluation.cvId,
+          name: candidateName,
+          email,
+          phone,
+          matchScore: typeof evaluation.score === "number" ? parseFloat(evaluation.score.toFixed(1)) : 0,
+          explanation: translatedExplanation,
+          skills,
+          experience,
+          education,
+          explanationDetails,
+          resumeUrl: "#",
+          recommendedAction: evaluation.recommendedAction || null,
+          actionReason: translatedActionReason,
+          updatedAt: evaluation.updatedAt,
+        };
+      })
+    );
+    
+    return transformedData;
   };
 
   const fetchCVMatches = async (jobId) => {
@@ -359,10 +524,13 @@ const CVMatchingPage = () => {
     const { signal } = abortControllerRef.current;
     let progressInterval = null;
 
-    try {      await updateLoadingState(0, 10);
-      await updateLoadingState(1, 25); const apiPromise = axios.post(
+    try {
+      await updateLoadingState(0, 10);
+      await updateLoadingState(1, 25);
+      
+      const apiPromise = axios.post(
         `http://localhost:8000/match-all/${jobId}`,
-        {},
+        { use_ai_agents: true },
         { signal, timeout: 300000 }
       );
 
@@ -379,59 +547,45 @@ const CVMatchingPage = () => {
 
       setLoadingProgress(90);
       await updateLoadingState(4, 100);
-      if (response.data && (Array.isArray(response.data) || (response.data.results && Array.isArray(response.data.results)))) {
-        console.log("CV Matching Response:", response.data);
-        
-        const resultsArray = Array.isArray(response.data) ? response.data : response.data.results;
-        
-        const transformedData = resultsArray.map((item, index) => {
-          if (!item || !item.cv_id) {
-            return {
-              id: `error-${index}`,
-              name: `Candidate Error ${index + 1}`,
-              email: "N/A",
-              phone: "N/A",
-              matchScore: 0,
-              explanation: "Invalid data from API.",
-              skills: [],
-              experience: [],
-              education: [],
-              explanationDetails: {},
-              resumeUrl: "#",
-              recommendedAction: null,
-              actionReason: "Dữ liệu không hợp lệ",
-            };
+
+      console.log("CV Matching Response:", response.data);
+
+      // Kiểm tra response structure
+      if (response.data) {
+        const { total_candidates, processing_method, message } = response.data;        // TH1: Không có CV nào được đánh giá trong lần này
+        if (total_candidates === 0 || processing_method === "none") {
+          console.log("No new evaluations, fetching existing evaluations:", message);
+          
+          // Call API get evaluations
+          const evaluationsResponse = await evaluationAPI.getEvaluationsByJobId(jobId);
+          console.log("Evaluations Response:", evaluationsResponse);
+          
+          if (evaluationsResponse.data && Array.isArray(evaluationsResponse.data)) {
+            const transformedData = await transformEvaluationsToDisplayFormat(evaluationsResponse.data);
+            setCandidates(transformedData);
+          } else {
+            setCandidates([]);
           }
-
-          const explanationText = typeof item.explanation === "string" ? item.explanation : "Không có giải thích chi tiết.";
-          const explanationDetails = parseExplanationToDetails(explanationText);
-
-          const skills = explanationDetails.skills ? parseSkills(explanationDetails.skills) : [];
-          const experience = explanationDetails.experience
-            ? [{ title: "Work Experience Summary", company: "Details in explanation", duration: "Based on CV/JD", match: getMatchLevel(explanationDetails.experience) }]
-            : [];
-          const education = explanationDetails.education
-            ? [{ degree: "Education Summary", institution: "Details in explanation", year: "N/A", match: getMatchLevel(explanationDetails.education) }]
-            : [];
-
-          return {
-            id: item.cv_id,
-            name: `Candidate (CV ID: ${item.cv_id.substring(0, 6)})`,
-            email: item.email || `no-email-${index}@example.com`,
-            phone: item.phone || "N/A",
-            matchScore: typeof item.score === "number" ? parseFloat(item.score.toFixed(1)) : 0,
-            explanation: explanationText,
-            skills,
-            experience,
-            education,
-            explanationDetails,
-            resumeUrl: item.resume_url || "#",
-            recommendedAction: item.recommended_action || null,
-            actionReason: item.action_reason || "Không có gợi ý hành động",
-          };
-        });
-
-        setCandidates(transformedData);
+        } 
+        // TH2: Có CV được đánh giá
+        else if (total_candidates > 0) {
+          console.log(`${total_candidates} CVs were evaluated, fetching all evaluations`);
+          
+          // Call API get evaluations để lấy tất cả đánh giá (cũ + mới)
+          const evaluationsResponse = await evaluationAPI.getEvaluationsByJobId(jobId);
+          console.log("All Evaluations Response:", evaluationsResponse);
+          
+          if (evaluationsResponse.data && Array.isArray(evaluationsResponse.data)) {
+            const transformedData = await transformEvaluationsToDisplayFormat(evaluationsResponse.data);
+            setCandidates(transformedData);
+          } else {
+            setError("Không thể lấy dữ liệu đánh giá từ máy chủ.");
+            setCandidates([]);
+          }
+        } else {
+          setError("Định dạng dữ liệu không hợp lệ từ máy chủ.");
+          setCandidates([]);
+        }
       } else {
         setError("Định dạng dữ liệu không hợp lệ từ máy chủ.");
         setCandidates([]);
@@ -442,7 +596,7 @@ const CVMatchingPage = () => {
         if (err.code === "ECONNABORTED") {
           setError("Quá thời gian phản hồi từ máy chủ. Vui lòng thử lại.");
         } else if (err.response) {
-          setError(`Lỗi từ máy chủ: ${err.response.status} - ${err.response.data.detail || err.message}`);
+          setError(`Lỗi từ máy chủ: ${err.response.status} - ${err.response.data?.detail || err.message}`);
         } else {
           setError("Không thể tải dữ liệu. Vui lòng kiểm tra kết nối và thử lại.");
         }
@@ -778,18 +932,23 @@ const CVMatchingPage = () => {
             <AlertCircle className="h-6 w-6" />
             <p>{error}</p>
           </motion.div>
-        )}
-
-        {loading && (
+        )}        {loading && (
           <LoadingAnimation
             step={loadingStep}
             progress={loadingProgress}
             messages={loadingMessages}
             onCancel={cancelMatching}
           />
-        )}
-
-        {candidates.length > 0 && !loading && (
+        )}        {loadingExistingEvaluations && !loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3 text-blue-700"
+          >
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <p>Đang tải thông tin chi tiết của các ứng viên đã được đánh giá...</p>
+          </motion.div>
+        )}{(candidates.length > 0 && !loading && !loadingExistingEvaluations) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -839,10 +998,15 @@ const CVMatchingPage = () => {
                   )}
                 </Button>
               </div>
-            </div>
-
-            <div className="mb-6 text-sm text-gray-600">
-              Hiển thị <span className="font-medium">{filteredCandidates.length}</span> ứng viên
+            </div>            <div className="mb-6 flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                Hiển thị <span className="font-medium">{filteredCandidates.length}</span> trong tổng số <span className="font-medium">{candidates.length}</span> ứng viên đã được đánh giá
+              </div>
+              {candidates.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  Dữ liệu đánh giá từ hệ thống AI Agents
+                </div>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -1182,9 +1346,7 @@ const CVMatchingPage = () => {
               </motion.div>
             )}
           </motion.div>
-        )}
-
-        {!candidates.length && !loading && !error && selectedJob && (
+        )}        {!candidates.length && !loading && !loadingExistingEvaluations && !error && selectedJob && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1193,7 +1355,7 @@ const CVMatchingPage = () => {
             <FileSearchOutlined className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-2xl font-semibold text-gray-900 mb-3">Chưa có kết quả đánh giá</h3>
             <p className="text-gray-600 max-w-md mx-auto">
-              Nhấn nút "Bắt đầu đánh giá" để hệ thống tự động phân tích và đánh giá CV.
+              Nhấn nút "Bắt đầu đánh giá" để hệ thống tự động phân tích và đánh giá CV của các ứng viên.
             </p>
           </motion.div>
         )}

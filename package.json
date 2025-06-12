@@ -41,6 +41,7 @@
     "dayjs": "^1.11.13",
     "font-awesome": "^4.7.0",
     "framer-motion": "^12.15.0",
+    "google-translate-api-browser": "^5.0.0",
     "html-to-text": "^9.0.5",
     "install": "^0.13.0",
     "lucide-react": "^0.483.0",
