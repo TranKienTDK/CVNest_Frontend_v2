@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,19 +43,17 @@ const LoginForm = ({ onSubmit }) => {
     }
 
     setIsLoading(true);
-    setErrors({});
-
-    try {
+    setErrors({});    try {
       if (onSubmit) {
         await onSubmit(form.email, form.password);
       } else {
         await new Promise((resolve) => setTimeout(resolve, 1500));
         navigate("/dashboard");
-      }
-    } catch (error) {
-      const errorMessage =
-        error?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
-      setErrors({ ...errors, general: errorMessage });
+      }    } catch (error) {
+      toast.error("Email hoặc mật khẩu không chính xác. Vui lòng thử lại", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -155,18 +154,7 @@ const LoginForm = ({ onSubmit }) => {
               >
                 {errors.password}
               </motion.p>
-            )}
-          </div>
-
-          {errors.general && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-3 rounded-md bg-destructive/10 text-destructive text-sm"
-            >
-              {errors.general}
-            </motion.div>
-          )}
+            )}          </div>
 
           <Button
             type="submit"

@@ -32,6 +32,7 @@ import JobManagement from "./pages/hr/JobManagement";
 import CVMatchingPage from "./pages/hr/match/CVMatchingPage";
 import JobApplicationsDetail from "./pages/hr/JobApplicationsDetail";
 import SavedCV from "./pages/hr/saved_cv";
+import RecommendedJobs from "./pages/user/recommend_jobs/RecommendedJobs";
 
 function App() {
     return (
@@ -60,6 +61,7 @@ function App() {
                     </Route>
                     <Route path="profile" element={<UserProfile />} />
                     <Route path="applications" element={<ApplicationsManagement />} />
+                    <Route path="recommended-jobs" element={<RecommendedJobs />} />
                 </Route>
                 
                 {/* HR Routes */}

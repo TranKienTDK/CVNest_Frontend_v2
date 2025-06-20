@@ -37,11 +37,6 @@ const Login = () => {
       
       return response;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 2000,
-      });
       throw error;
     } finally {
       setIsLoading(false);

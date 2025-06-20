@@ -22,6 +22,7 @@ import {
   X,
   Check,
   Star,
+  TrendingUp,
 } from "lucide-react"
 
 import {
@@ -292,6 +293,16 @@ export default function Header({ className }) {
                   Công ty IT
                 </Link>
               </NavigationMenuItem>
+
+              {/* Việc làm phù hợp - Only visible for authenticated users (not HR) */}
+              {authenticated && !isHR && (
+                <NavigationMenuItem>
+                  <Link to={ROUTES.RECOMMENDED_JOBS} className={navigationMenuTriggerStyle()}>
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Việc làm phù hợp
+                  </Link>
+                </NavigationMenuItem>
+              )}
               
               {/* HR Job Management - Only visible for HR users */}
               {isHR && (
@@ -373,8 +384,6 @@ export default function Header({ className }) {
         {/* Right side items */}
         <div className="hidden items-center gap-4 md:flex">
           <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">0123 456 789</span>
           </div>
 
           {authenticated ? (
@@ -748,6 +757,14 @@ export default function Header({ className }) {
                     <span className="hover:text-primaryRed">Công ty IT</span>
                   </Link>
 
+                  {/* Việc làm phù hợp - Only visible for authenticated users (not HR) */}
+                  {authenticated && !isHR && (
+                    <Link to={ROUTES.RECOMMENDED_JOBS} className="flex items-center gap-2 rounded-md p-2 hover:bg-muted">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Việc làm phù hợp</span>
+                    </Link>
+                  )}
+
                   {/* HR specific navigation links for mobile */}
                   {isHR && (
                     <>
@@ -828,10 +845,6 @@ export default function Header({ className }) {
 
                 {!authenticated && (
                   <div className="space-y-2 pt-4 border-t">
-                    <div className="flex items-center gap-2 p-2">
-                      <Phone className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">0123 456 789</span>
-                    </div>
                     <Button variant="outline" className="w-full justify-start">
                       Nhà tuyển dụng
                     </Button>

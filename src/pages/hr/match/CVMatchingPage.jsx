@@ -13,12 +13,14 @@ import TemplateCV4 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV4";
 import { PDFViewer } from "@react-pdf/renderer";
 import cvAPI from "@/api/cv";
 import evaluationAPI from "@/api/evaluation";
+import applyAPI from "@/api/apply";
+import { getUserData } from "@/helper/storage";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./TabsComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmailComposeModal } from "../email/EmailComposeModal";
 import { getEmailPreview, sendEmail } from "../../../api/email";
-import translate from "google-translate-api-browser";
+
 import {
   Select,
   SelectContent,
@@ -104,7 +106,6 @@ const parseExplanationToDetails = (explanationText) => {
   } return details;
 };
 
-// CV Data transformation function
 const transformApiDataToFormData = (apiData) => {
   if (!apiData) return null;
 
@@ -131,86 +132,86 @@ const transformApiDataToFormData = (apiData) => {
     profile: apiData.profile || "",
     experiences: Array.isArray(apiData.experiences)
       ? apiData.experiences.map((exp) => ({
-          id: exp.id || Date.now(),
-          company: exp.company || "",
-          position: exp.position || "",
-          startDate: exp.startDate ? dayjs(exp.startDate) : null,
-          endDate: exp.endDate ? dayjs(exp.endDate) : null,
-          isCurrent: !exp.endDate,
-          description: exp.description || "",
-        }))
+        id: exp.id || Date.now(),
+        company: exp.company || "",
+        position: exp.position || "",
+        startDate: exp.startDate ? dayjs(exp.startDate) : null,
+        endDate: exp.endDate ? dayjs(exp.endDate) : null,
+        isCurrent: !exp.endDate,
+        description: exp.description || "",
+      }))
       : [],
     skills: Array.isArray(apiData.skills)
       ? apiData.skills.map((skill) => ({
-          id: skill.id || Date.now(),
-          skill: skill.name || "",
-          rate: skill.rate || 0,
-        }))
+        id: skill.id || Date.now(),
+        skill: skill.name || "",
+        rate: skill.rate || 0,
+      }))
       : [],
     education: Array.isArray(apiData.educations)
       ? apiData.educations.map((edu) => ({
-          id: edu.id || Date.now(),
-          school: edu.school || "",
-          field: edu.field || "",
-          startDate: edu.startDate ? dayjs(edu.startDate) : null,
-          endDate: edu.endDate ? dayjs(edu.endDate) : null,
-          description: edu.description || "",
-        }))
+        id: edu.id || Date.now(),
+        school: edu.school || "",
+        field: edu.field || "",
+        startDate: edu.startDate ? dayjs(edu.startDate) : null,
+        endDate: edu.endDate ? dayjs(edu.endDate) : null,
+        description: edu.description || "",
+      }))
       : [],
     projects: Array.isArray(apiData.projects)
       ? apiData.projects.map((p) => ({
-          id: p.id || Date.now(),
-          project: p.project || "",
-          startDate: p.startDate ? dayjs(p.startDate) : null,
-          endDate: p.endDate ? dayjs(p.endDate) : null,
-          description: p.description || "",
-        }))
+        id: p.id || Date.now(),
+        project: p.project || "",
+        startDate: p.startDate ? dayjs(p.startDate) : null,
+        endDate: p.endDate ? dayjs(p.endDate) : null,
+        description: p.description || "",
+      }))
       : [],
     interests: Array.isArray(apiData.interests)
       ? apiData.interests.map((h) => ({
-          id: h.id || Date.now(),
-          interest: h.interest || "",
-        }))
+        id: h.id || Date.now(),
+        interest: h.interest || "",
+      }))
       : [],
     hobbies: Array.isArray(apiData.interests)
       ? apiData.interests.map((h) => ({
-          id: h.id || Date.now(),
-          name: h.interest || "",
-        }))
+        id: h.id || Date.now(),
+        name: h.interest || "",
+      }))
       : [],
     consultants: Array.isArray(apiData.consultants)
       ? apiData.consultants.map((c) => ({
-          id: c.id || Date.now(),
-          name: c.name || "",
-          position: c.position || "",
-          email: c.email || "",
-          phone: c.phone || "",
-        }))
+        id: c.id || Date.now(),
+        name: c.name || "",
+        position: c.position || "",
+        email: c.email || "",
+        phone: c.phone || "",
+      }))
       : [],
     languages: Array.isArray(apiData.languages)
       ? apiData.languages.map((l) => ({
-          id: l.id || Date.now(),
-          language: l.language || "",
-          level: l.level || "",
-        }))
+        id: l.id || Date.now(),
+        language: l.language || "",
+        level: l.level || "",
+      }))
       : [],
     activities: Array.isArray(apiData.activities)
       ? apiData.activities.map((a) => ({
-          id: a.id || Date.now(),
-          activity: a.activity || "",
-          startDate: a.startDate ? dayjs(a.startDate) : null,
-          endDate: a.endDate ? dayjs(a.endDate) : null,
-          isCurrent: !a.endDate,
-          description: a.description || "",
-        }))
+        id: a.id || Date.now(),
+        activity: a.activity || "",
+        startDate: a.startDate ? dayjs(a.startDate) : null,
+        endDate: a.endDate ? dayjs(a.endDate) : null,
+        isCurrent: !a.endDate,
+        description: a.description || "",
+      }))
       : [],
     certificates: Array.isArray(apiData.certificates)
       ? apiData.certificates.map((c) => ({
-          id: c.id || Date.now(),
-          certificate: c.certificate || "",
-          date: c.date ? dayjs(c.date) : null,
-          description: c.description || "",
-        }))
+        id: c.id || Date.now(),
+        certificate: c.certificate || "",
+        date: c.date ? dayjs(c.date) : null,
+        description: c.description || "",
+      }))
       : [],
     additionalInfo: apiData.additionalInfo || "",
   };
@@ -249,68 +250,10 @@ const CVMatchingPage = () => {
     body: ""
   });
 
-  // CV Preview states
   const [previewCV, setPreviewCV] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [loadingCV, setLoadingCV] = useState(false);  const [cvDetailsCache, setCvDetailsCache] = useState({});
-  
-  // Translation cache to avoid repeated API calls
-  const translationCache = useRef({});
-  // Hàm dịch text từ tiếng Anh sang tiếng Việt với retry và timeout
-  const translateText = async (text, retries = 2) => {
-    if (!text || typeof text !== "string" || text.trim() === "") {
-      return text;
-    }    // Kiểm tra cache trước
-    if (translationCache.current[text]) {
-      return translationCache.current[text];
-    }
-
-    try {
-      // Add timeout for translation
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Translation timeout')), 10000)
-      );
-      
-      const translationPromise = translate(text, { from: 'en', to: 'vi' });
-      
-      const result = await Promise.race([translationPromise, timeoutPromise]);
-      const translatedText = result.text;
-      
-      // Lưu vào cache
-      translationCache.current[text] = translatedText;
-      
-      return translatedText;
-    } catch (error) {
-      console.warn(`Translation failed for text (${3 - retries} retries left):`, text, error);
-      
-      // Retry logic
-      if (retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
-        return translateText(text, retries - 1);
-      }
-      
-      // If all retries fail, return original text
-      console.error("Translation failed after all retries, returning original text");
-      return text;
-    }
-  };
-
-  // Hàm dịch object có nhiều text fields
-  const translateTextFields = async (obj, fieldsToTranslate = []) => {
-    if (!obj || typeof obj !== "object") return obj;
-    
-    const translatedObj = { ...obj };
-    
-    for (const field of fieldsToTranslate) {
-      if (obj[field] && typeof obj[field] === "string") {
-        translatedObj[field] = await translateText(obj[field]);
-      }
-    }
-    
-    return translatedObj;
-  };
-
-  // CV Preview function
+  const [loadingCV, setLoadingCV] = useState(false); const [cvDetailsCache, setCvDetailsCache] = useState({});
+  const [applicationStatuses, setApplicationStatuses] = useState({});
   const handlePreviewCV = async (cvId) => {
     try {
       setLoadingCV(true);
@@ -340,22 +283,27 @@ const CVMatchingPage = () => {
     } finally {
       setLoadingCV(false);
     }
-  };  // Hàm load evaluations từ DB khi trang được load
+  };
   const loadExistingEvaluations = async (jobId) => {
     try {
       setLoadingExistingEvaluations(true);
       const evaluationsResponse = await evaluationAPI.getEvaluationsByJobId(jobId);
       console.log("Loaded existing evaluations:", evaluationsResponse);
-      
+
       if (evaluationsResponse.data && Array.isArray(evaluationsResponse.data)) {
         const transformedData = await transformEvaluationsToDisplayFormat(evaluationsResponse.data);
         setCandidates(transformedData);
+
+        for (const candidate of transformedData) {
+          if (candidate.id) {
+            checkApplicationStatus(jobId, candidate.id);
+          }
+        }
       } else {
         setCandidates([]);
       }
     } catch (error) {
       console.error("Error loading existing evaluations:", error);
-      // Không hiển thị error cho việc load existing evaluations
       setCandidates([]);
     } finally {
       setLoadingExistingEvaluations(false);
@@ -365,7 +313,6 @@ const CVMatchingPage = () => {
   useEffect(() => {
     if (location.state && location.state.job) {
       setSelectedJob(location.state.job);
-      // Load existing evaluations when job is selected
       if (location.state.job.id) {
         loadExistingEvaluations(location.state.job.id);
       }
@@ -425,57 +372,47 @@ const CVMatchingPage = () => {
       console.error("Error getting match level from text:", text, error);
     }
     return "medium";
-  };  // Hàm chuyển đổi dữ liệu từ API evaluations sang format hiển thị
-  const transformEvaluationsToDisplayFormat = async (evaluationsData) => {
+  }; const transformEvaluationsToDisplayFormat = async (evaluationsData) => {
     const transformedData = await Promise.all(
       evaluationsData.map(async (evaluation, index) => {
         const explanationText = evaluation.explanation || "Không có giải thích chi tiết.";
-        
-        // Dịch explanation và actionReason
-        const translatedExplanation = await translateText(explanationText);
-        const translatedActionReason = evaluation.actionReason ? await translateText(evaluation.actionReason) : "Không có gợi ý hành động";
-        
-        const explanationDetails = parseExplanationToDetails(translatedExplanation);
 
-        // Transform skills từ array string sang format hiển thị
-        const skills = Array.isArray(evaluation.skills) 
+        const explanationDetails = parseExplanationToDetails(explanationText);
+
+        const skills = Array.isArray(evaluation.skills)
           ? evaluation.skills.map(skill => ({
-              name: skill,
-              match: "medium" // Default match level cho skills
-            }))
+            name: skill,
+            match: "medium"
+          }))
           : explanationDetails.skills ? parseSkills(explanationDetails.skills) : [];
 
         const experience = explanationDetails.experience
           ? [{ title: "Work Experience Summary", company: "Details in explanation", duration: "Based on CV/JD", match: getMatchLevel(explanationDetails.experience) }]
           : [];
-        
+
         const education = explanationDetails.education
           ? [{ degree: "Education Summary", institution: "Details in explanation", year: "N/A", match: getMatchLevel(explanationDetails.education) }]
           : [];
 
-        // Lấy thông tin CV để có email và phone
         let email = "N/A";
         let phone = "N/A";
         let candidateName = `Candidate (CV ID: ${evaluation.cvId.substring(0, 6)})`;
-        
+
         try {
           let cvData = null;
-          
-          // Kiểm tra cache trước
+
           if (cvDetailsCache[evaluation.cvId]) {
             cvData = cvDetailsCache[evaluation.cvId];
           } else {
-            // Call API để lấy thông tin CV
             const response = await cvAPI.getDetailCv(evaluation.cvId);
             cvData = response.data.data;
-            
-            // Lưu vào cache để sử dụng sau
+
             setCvDetailsCache(prev => ({
               ...prev,
               [evaluation.cvId]: cvData
             }));
           }
-          
+
           if (cvData && cvData.info) {
             email = cvData.info.email || "N/A";
             phone = cvData.info.phone || "N/A";
@@ -485,27 +422,25 @@ const CVMatchingPage = () => {
           }
         } catch (error) {
           console.warn("Could not get CV details for cvId:", evaluation.cvId, error);
-        }
-
-        return {
+        } return {
           id: evaluation.cvId,
           name: candidateName,
           email,
           phone,
           matchScore: typeof evaluation.score === "number" ? parseFloat(evaluation.score.toFixed(1)) : 0,
-          explanation: translatedExplanation,
+          explanation: explanationText,
           skills,
           experience,
           education,
           explanationDetails,
           resumeUrl: "#",
           recommendedAction: evaluation.recommendedAction || null,
-          actionReason: translatedActionReason,
+          actionReason: evaluation.actionReason || "Không có gợi ý hành động",
           updatedAt: evaluation.updatedAt,
         };
       })
     );
-    
+
     return transformedData;
   };
 
@@ -527,7 +462,7 @@ const CVMatchingPage = () => {
     try {
       await updateLoadingState(0, 10);
       await updateLoadingState(1, 25);
-      
+
       const apiPromise = axios.post(
         `http://localhost:8000/match-all/${jobId}`,
         { use_ai_agents: true },
@@ -550,34 +485,40 @@ const CVMatchingPage = () => {
 
       console.log("CV Matching Response:", response.data);
 
-      // Kiểm tra response structure
       if (response.data) {
-        const { total_candidates, processing_method, message } = response.data;        // TH1: Không có CV nào được đánh giá trong lần này
+        const { total_candidates, processing_method, message } = response.data;
         if (total_candidates === 0 || processing_method === "none") {
           console.log("No new evaluations, fetching existing evaluations:", message);
-          
-          // Call API get evaluations
+
           const evaluationsResponse = await evaluationAPI.getEvaluationsByJobId(jobId);
           console.log("Evaluations Response:", evaluationsResponse);
-          
           if (evaluationsResponse.data && Array.isArray(evaluationsResponse.data)) {
             const transformedData = await transformEvaluationsToDisplayFormat(evaluationsResponse.data);
             setCandidates(transformedData);
+
+            for (const candidate of transformedData) {
+              if (candidate.id) {
+                checkApplicationStatus(jobId, candidate.id);
+              }
+            }
           } else {
             setCandidates([]);
           }
-        } 
-        // TH2: Có CV được đánh giá
+        }
         else if (total_candidates > 0) {
           console.log(`${total_candidates} CVs were evaluated, fetching all evaluations`);
-          
-          // Call API get evaluations để lấy tất cả đánh giá (cũ + mới)
+
           const evaluationsResponse = await evaluationAPI.getEvaluationsByJobId(jobId);
           console.log("All Evaluations Response:", evaluationsResponse);
-          
           if (evaluationsResponse.data && Array.isArray(evaluationsResponse.data)) {
             const transformedData = await transformEvaluationsToDisplayFormat(evaluationsResponse.data);
             setCandidates(transformedData);
+
+            for (const candidate of transformedData) {
+              if (candidate.id) {
+                checkApplicationStatus(jobId, candidate.id);
+              }
+            }
           } else {
             setError("Không thể lấy dữ liệu đánh giá từ máy chủ.");
             setCandidates([]);
@@ -750,7 +691,6 @@ const CVMatchingPage = () => {
         placement: "topRight",
         duration: 3
       });
-
     } catch (error) {
       console.error("Error sending email:", error);
 
@@ -760,7 +700,63 @@ const CVMatchingPage = () => {
         placement: "topRight",
         duration: 4
       });
-    }  };
+    }
+  };
+
+  const handleSaveCV = async (candidate) => {
+    try {
+      const userData = getUserData();
+      if (!userData || !userData.id) {
+        return;
+      }
+
+      console.log("Saving CV for candidate:", candidate);
+      console.log("HR ID:", userData.id);
+      console.log("CV ID:", candidate.id);
+
+      const payload = {
+        hrId: userData.id,
+        cvId: candidate.id
+      }; await cvAPI.saveCV(payload);
+
+      toast.success(`CV của ${candidate.name} đã được lưu thành công!`, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      notification.success({
+        message: "Lưu CV thành công",
+        description: `CV của ${candidate.name} đã được lưu vào danh sách của bạn.`,
+        placement: "topRight",
+        duration: 3
+      });
+
+    } catch (error) {
+      console.error("Error saving CV:", error);
+      console.error("Error response:", error.response?.data);
+      if (error.response && error.response.status === 400) {
+        toast.warning("CV đã được lưu, vui lòng chọn CV khác!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+
+        notification.warning({
+          message: "CV đã được lưu",
+          description: "CV này đã có trong danh sách lưu của bạn, vui lòng chọn CV khác.",
+          placement: "topRight",
+          duration: 3
+        });
+      }
+    }
+  };
 
   const getRecommendedActionBadge = (action) => {
     if (!action) {
@@ -830,6 +826,22 @@ const CVMatchingPage = () => {
     if (normalizedKey.includes("lang")) return iconMap.languages;
     if (normalizedKey.includes("proj")) return iconMap.projects;
     return iconMap[normalizedKey] || iconMap.default;
+  };
+  const checkApplicationStatus = async (jobId, cvId) => {
+    try {
+      const response = await applyAPI.checkUserAppliedJob(jobId, cvId);
+      const isApplied = response.data.message === "Đã ứng tuyển";
+
+      setApplicationStatuses(prev => ({
+        ...prev,
+        [`${jobId}_${cvId}`]: isApplied
+      }));
+
+      return isApplied;
+    } catch (error) {
+      console.error("Error checking application status:", error);
+      return false;
+    }
   };
 
   return (
@@ -1023,44 +1035,50 @@ const CVMatchingPage = () => {
                       className="overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-2xl border-l-4"
                       style={{ borderLeftColor: getScoreBorderColor(candidate.matchScore) }}
                     >
-                      <CardHeader className="p-6">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-xl font-semibold text-gray-900">{candidate.name}</CardTitle>
-                            <CardDescription className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-gray-600">
-                              <span className="flex items-center gap-1.5">
-                                <Mail className="h-4 w-4 text-gray-500" />
-                                {candidate.email}
-                              </span>
-                              <span className="hidden sm:inline mx-2 text-gray-400">|</span>
-                              <span className="flex items-center gap-1.5">
-                                <Phone className="h-4 w-4 text-gray-500" />
-                                {candidate.phone}
-                              </span>
-                            </CardDescription>
-                          </div>
-                          <div className="text-center">
-                            <div className="radial-progress text-xl font-bold" style={{
-                              "--value": typeof candidate.matchScore === "number" ? Math.round(candidate.matchScore) : 0,
-                              "--size": "4.5rem",
-                              "--thickness": "4px",
-                              color: getScoreColor(candidate.matchScore),
-                            }}>
-                              <span className={getScoreTextColor(candidate.matchScore)}>
-                                {typeof candidate.matchScore === "number" ? Math.round(candidate.matchScore) : 0}%
-                              </span>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">Độ phù hợp</div>
+                      <CardHeader className="p-6">                        <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <CardTitle className="text-xl font-semibold text-gray-900">{candidate.name}</CardTitle>
+                          <CardDescription className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-gray-600">
+                            <span className="flex items-center gap-1.5">
+                              <Mail className="h-4 w-4 text-gray-500" />
+                              {candidate.email}
+                            </span>
+                            <span className="hidden sm:inline mx-2 text-gray-400">|</span>
+                            <span className="flex items-center gap-1.5">
+                              <Phone className="h-4 w-4 text-gray-500" />
+                              {candidate.phone}
+                            </span>
+                          </CardDescription>
+
+                          {/* Application Status */}
+                          <div className="mt-3">
+                            <ApplicationStatusBadge
+                              isApplied={applicationStatuses[`${selectedJob?.id}_${candidate.id}`] || false}
+                            />
                           </div>
                         </div>
+                        <div className="text-center">
+                          <div className="radial-progress text-xl font-bold" style={{
+                            "--value": typeof candidate.matchScore === "number" ? Math.round(candidate.matchScore) : 0,
+                            "--size": "4.5rem",
+                            "--thickness": "4px",
+                            color: getScoreColor(candidate.matchScore),
+                          }}>
+                            <span className={getScoreTextColor(candidate.matchScore)}>
+                              {typeof candidate.matchScore === "number" ? Math.round(candidate.matchScore) : 0}%
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">Độ phù hợp</div>
+                        </div>
+                      </div>
                       </CardHeader>
                       <CardContent className="p-6 pt-0">                        <div className="mb-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
-                          <p className="flex items-start gap-2">
-                            <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-3">{typeof candidate.explanation === "string" ? candidate.explanation : "Không có giải thích."}</span>
-                          </p>
-                        </div>
-                        
+                        <p className="flex items-start gap-2">
+                          <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-3">{typeof candidate.explanation === "string" ? candidate.explanation : "Không có giải thích."}</span>
+                        </p>
+                      </div>
+
                         {/* Recommended Action Section */}
                         <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                           <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
@@ -1120,7 +1138,7 @@ const CVMatchingPage = () => {
                               <Eye className="mr-1.5 h-4 w-4" />
                               Xem CV
                             </Button>
-                            
+
                             {candidate.recommendedAction === "send_contact_email" ? (
                               <Button
                                 size="sm"
@@ -1129,25 +1147,17 @@ const CVMatchingPage = () => {
                               >
                                 <Mail className="mr-1.5 h-4 w-4" />
                                 Liên hệ ngay
-                              </Button>
-                            ) : candidate.recommendedAction === "save_cv" ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="flex-1 sm:flex-none border-blue-500 text-blue-600 hover:bg-blue-50 rounded-lg"
-                                onClick={() => {
-                                  notification.info({
-                                    message: "Lưu CV",
-                                    description: "Chức năng lưu CV sẽ được triển khai",
-                                    placement: "topRight",
-                                    duration: 3
-                                  });
-                                }}
-                              >
-                                <BookOpen className="mr-1.5 h-4 w-4" />
-                                Lưu CV
-                              </Button>
-                            ) : (
+                              </Button>) : candidate.recommendedAction === "save_cv" ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1 sm:flex-none border-blue-500 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                  onClick={() => handleSaveCV(candidate)}
+                                >
+                                  <BookOpen className="mr-1.5 h-4 w-4" />
+                                  Lưu CV
+                                </Button>
+                              ) : (
                               <Button
                                 size="sm"
                                 className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
@@ -1408,7 +1418,7 @@ const CVMatchingPage = () => {
             <span className="ml-3 text-gray-600">Đang tải CV...</span>
           </div>
         ) : previewCV ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -1434,7 +1444,7 @@ const CVMatchingPage = () => {
             </motion.div>
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-8"
@@ -1633,5 +1643,23 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+const ApplicationStatusBadge = ({ isApplied, className = "" }) => {
+  if (isApplied) {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 ${className}`}>
+        <CheckCircle className="h-3.5 w-3.5" />
+        Đã ứng tuyển
+      </div>
+    );
+  } else {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 ${className}`}>
+        <Circle className="h-3.5 w-3.5" />
+        Chưa ứng tuyển
+      </div>
+    );
+  }
+};
 
 export default CVMatchingPage;

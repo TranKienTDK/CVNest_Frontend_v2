@@ -23,6 +23,6 @@ export const ROUTES = {
     JOBMANAGEMENT: "/hr/jobs",
     APPLICATIONSMANAGEMENT: "/hr/applications",
     CVMATCHING: "/hr/cv-evaluate",
-    JOB_APPLICATIONS_DETAIL: "/hr/job-applications/:jobId",
-    SAVED_CVS: "/hr/saved-cv",
+    JOB_APPLICATIONS_DETAIL: "/hr/job-applications/:jobId",    SAVED_CVS: "/hr/saved-cv",
+    RECOMMENDED_JOBS: "/user/recommended-jobs",
 };

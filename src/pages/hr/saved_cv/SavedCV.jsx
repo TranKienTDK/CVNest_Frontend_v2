@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import Header from '@/components/header/Header';
 import { Card, Row, Col, Spin, Empty, Button, Tooltip, Input, Pagination, Avatar, Tag, Typography, Space, Skeleton, notification, Popconfirm, Modal } from 'antd';
 import { SearchOutlined, DeleteOutlined, FileTextOutlined, UserOutlined, MailOutlined, PhoneOutlined, CalendarOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { FileText, Bookmark, Search, Eye, Trash2 } from 'lucide-react';
 import cvAPI from '../../../api/cv';
 import { getUserData } from '../../../helper/storage';
 import { TemplateCV1 } from '@/pages/user/my-cv/components/CVTemplate/TemplateCV1';
@@ -11,6 +13,7 @@ import TemplateCV3 from '@/pages/user/my-cv/components/CVTemplate/TemplateCV3';
 import TemplateCV4 from '@/pages/user/my-cv/components/CVTemplate/TemplateCV4';
 import { PDFViewer } from '@react-pdf/renderer';
 import dayjs from 'dayjs';
+import styles from './SavedCV.module.css';
 
 const { Title, Text } = Typography;
 
@@ -25,9 +28,19 @@ const SavedCV = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [loadingCV, setLoadingCV] = useState(false);
   const [cvDetailsCache, setCvDetailsCache] = useState({});
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   const navigate = useNavigate();
   const userData = getUserData();
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoaded(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   useEffect(() => {
     fetchSavedCVs();
   }, [currentPage, pageSize]);
@@ -323,159 +336,192 @@ const SavedCV = () => {
       opacity: 0,
       transition: { duration: 0.2 }
     }
-  };
-  const cardVariants = {
+  };  const cardVariants = {
     initial: {
       scale: 1,
       boxShadow: "0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)",
       y: 0
     },
     hover: {
-      scale: 1.03,
-      boxShadow: "0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)",
-      y: -8,
+      scale: 1.005,
+      boxShadow: "0 8px 20px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04)",
+      y: -2,
       transition: {
         type: "spring",
         stiffness: 400,
-        damping: 15
+        damping: 30
       }
     }
-  };
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 mb-8 shadow-xl relative overflow-hidden"
-        >
-          <div className="absolute inset-0 opacity-10">
-            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-          </div>
-
-          <div className="relative z-10">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-              <div className="mb-6 md:mb-0">
-                <Title level={2} className="text-white mb-2">CV Đã Lưu</Title>
-                <Text className="text-blue-100 text-lg max-w-xl">
-                  Quản lý danh sách CV ứng viên tiềm năng của bạn
-                </Text>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <span className="bg-blue-500/50 text-white px-4 py-2 rounded-lg flex items-center">
-                  <FileTextOutlined className="mr-2" />
-                  {filteredCVs.length} CV
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 relative max-w-2xl">
-              <Input
-                placeholder="Tìm kiếm theo tên CV, tên ứng viên, email hoặc số điện thoại..."
-                prefix={<SearchOutlined className="text-gray-400" />}
-                onChange={handleSearch}
-                className="py-3 pl-10 pr-4 rounded-xl shadow-lg border-0 text-base text-gray-800 bg-white"
-                size="large"
-                allowClear
-              />
-            </div>
-          </div>
-        </motion.div>
-
-        {loading ? (
-          <Row gutter={[24, 24]}>
-            {[...Array(6)].map((_, index) => (
-              <Col xs={24} sm={12} md={8} key={index}>
-                <SkeletonCard />
-              </Col>
-            ))}
-          </Row>
-        ) : filteredCVs.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white rounded-xl p-10 text-center shadow-md"
-          >
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              imageStyle={{ height: 80 }}
-              description={
-                <span className="text-gray-700 text-lg font-medium">
-                  {searchKeyword
-                    ? "Không tìm thấy CV nào phù hợp với từ khóa tìm kiếm"
-                    : "Bạn chưa lưu CV nào"}
-                </span>
-              }
-            >
-              <Button
-                type="primary"
-                size="large"
-                className="mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0 rounded-lg h-12 px-8 font-medium shadow-md"
-                onClick={() => navigate('/jobs')}
+  };return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <Header />
+      
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: pageLoaded ? 1 : 0 }}
+        transition={{ duration: 0.5 }}
+      >        {/* Header Section */}
+        <div className={`${styles['glass-card']} border-b border-white/20 backdrop-blur-xl`}>
+          <div className="container mx-auto px-6 py-8 pt-24">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                Tìm kiếm việc làm và ứng viên
-              </Button>
-            </Empty>
-          </motion.div>
-        ) : (
-          <>
-            <AnimatePresence>              <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent">
+                  CV Đã Lưu
+                </h1>
+                <p className="text-lg text-gray-600 max-w-2xl">
+                  Quản lý danh sách CV ứng viên tiềm năng của bạn một cách hiệu quả
+                </p>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >                <div className="flex items-center space-x-4">
+                  <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center">
+                    <FileText className="w-5 h-5 mr-2" />
+                    {filteredCVs.length} CV
+                  </span>
+                  <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center cursor-pointer"
+                    onClick={() => navigate('/hr/applications')}
+                  >
+                    <Bookmark className="w-5 h-5 mr-2" />
+                    Quản lý ứng tuyển
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-6 py-8">          {/* Search Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <Card className={`${styles['glass-card']} p-6 mb-8 border-0 shadow-xl`}>
+              <div className="flex justify-center items-center">
+                <div className="relative w-full max-w-2xl">
+                  <div className={`flex items-center ${styles['search-container']} rounded-xl py-2 px-4`}>
+                    <Search className="text-gray-400 w-5 h-5 mr-3" />
+                    <Input 
+                      placeholder="Tìm kiếm theo tên CV, tên ứng viên, email hoặc số điện thoại..." 
+                      value={searchKeyword}
+                      onChange={handleSearch}
+                      className="flex-1 border-0 shadow-none bg-transparent"
+                      style={{ 
+                        boxShadow: 'none',
+                        background: 'transparent'
+                      }}
+                    />
+                    {searchKeyword && (
+                      <Button 
+                        type="text" 
+                        size="small"
+                        onClick={() => setSearchKeyword('')}
+                        className="ml-2 hover:bg-gray-100 rounded-lg p-1 text-gray-400 hover:text-gray-600"
+                        style={{ minWidth: 'auto', width: '24px', height: '24px' }}
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>{/* Content Section */}
+          {loading ? (
+            <Row gutter={[24, 24]}>
+              {[...Array(6)].map((_, index) => (
+                <Col xs={24} sm={12} md={8} key={index}>
+                  <SkeletonCard />
+                </Col>
+              ))}
+            </Row>
+          ) : filteredCVs.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white rounded-xl p-10 text-center shadow-md"
             >
-              <Row gutter={[24, 24]}>
-                {paginatedCVs.map((cv) => (
-                  <Col xs={24} sm={12} md={8} key={cv.id}>
-                    <motion.div
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                imageStyle={{ height: 80 }}
+                description={
+                  <span className="text-gray-700 text-lg font-medium">
+                    {searchKeyword
+                      ? "Không tìm thấy CV nào phù hợp với từ khóa tìm kiếm"
+                      : "Bạn chưa lưu CV nào"}
+                  </span>
+                }
+              >
+                <Button
+                  type="primary"
+                  size="large"
+                  className="mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0 rounded-lg h-12 px-8 font-medium shadow-md"
+                  onClick={() => navigate('/jobs')}
+                >
+                  Tìm kiếm việc làm và ứng viên
+                </Button>
+              </Empty>
+            </motion.div>
+          ) : (
+            <>
+              <AnimatePresence>
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <Row gutter={[24, 24]}>
+                    {paginatedCVs.map((cv) => (
+                  <Col xs={24} sm={12} md={8} key={cv.id}>                    <motion.div
                       layout
-                      className="h-full"
+                      className={`h-full ${styles['cv-card-container']}`}
                       variants={cardVariants}
                       initial="initial"
                       whileHover="hover"
-                    >
-                      <Card
-                        className="h-full overflow-hidden border border-gray-100 rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:scale-[1.02]"
+                    >                      <Card
+                        className="h-full overflow-hidden bg-white shadow-sm border-0"
                         styles={{
                           body: {
                             padding: '24px',
                           }
-                        }}
-                        actions={[
-                          <Tooltip title="Xem trước CV" placement="top">
-                            <div className="flex justify-center items-center">
-                              <FileTextOutlined
-                                key="preview"
-                                onClick={() => handlePreviewCV(cv.id)}
-                                className="text-blue-500 hover:text-blue-700 transition-all transform hover:scale-125 ease-out duration-300 p-1"
-                              />
-                            </div>
-                          </Tooltip>,
-                          <Popconfirm
-                            title="Xóa khỏi danh sách lưu?"
-                            description="Bạn có chắc chắn muốn xóa CV này khỏi danh sách đã lưu không?"
-                            onConfirm={() => handleRemoveSavedCV(cv.id)}
-                            okText="Xóa"
-                            cancelText="Hủy"
-                            placement="top"
-                          >
-                            <div className="flex justify-center items-center">
-                              <DeleteOutlined
-                                key="delete"
-                                className="text-gray-500 hover:text-red-500 transition-all transform hover:scale-125 ease-out duration-300 p-1"
-                              />
-                            </div>
-                          </Popconfirm>
+                        }}                        actions={[
+                          <div key="preview" className="flex justify-center">
+                            <Button
+                              type="text"
+                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 group"
+                              onClick={() => handlePreviewCV(cv.id)}
+                            >
+                              <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              <span className="text-sm font-medium">Xem trước</span>
+                            </Button>
+                          </div>,
+                          <div key="delete" className="flex justify-center">
+                            <Popconfirm
+                              title="Xóa khỏi danh sách lưu?"
+                              description="Bạn có chắc chắn muốn xóa CV này khỏi danh sách đã lưu không?"
+                              onConfirm={() => handleRemoveSavedCV(cv.id)}
+                              okText="Xóa"
+                              cancelText="Hủy"
+                              placement="top"
+                            >
+                              <Button
+                                type="text"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+                              >
+                                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                <span className="text-sm font-medium">Xóa</span>
+                              </Button>
+                            </Popconfirm>
+                          </div>
                         ]}
                       >
                         <div className="flex items-start mb-4">
@@ -552,18 +598,16 @@ const SavedCV = () => {
                   className="bg-white rounded-xl shadow-md p-4 border border-gray-100"
                 />
               </motion.div>
-            )}
-          </>
-        )}      </div>
-
-      <Modal
+            )}          </>
+        )}        </div>
+      </motion.div>      <Modal
         open={showPreviewModal}
         onCancel={() => setShowPreviewModal(false)}
         style={{ top: 0 }}
         width="90%"
         footer={null}
         destroyOnClose
-        className="cv-preview-modal"
+        className={`cv-preview-modal ${styles['modal-container']}`}
         closeIcon={
           <div className="bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors">
             <span className="text-gray-700">&times;</span>
