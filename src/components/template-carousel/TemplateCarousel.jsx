@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/routes/routes";
+import { isAuthenticated } from "@/helper/storage";
 
 import template1 from "../../assets/temp1.jpg";
 import template2 from "../../assets/temp2.jpg";
@@ -34,6 +35,7 @@ const TemplateCarousel = ({
       description: "Mẫu CV tối giản với điểm nhấn màu tím hiện đại và chuyên nghiệp"
     }  ],
   onSelectTemplate = () => {},
+  onUnauthenticated = () => {},
 }) => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -116,11 +118,14 @@ const TemplateCarousel = ({
                   <div className="p-5">
                     <h3 className="font-semibold text-lg mb-2">{template.name}</h3>                    
                     <p className="text-sm text-gray-500 mb-4">{template.description}</p>
-                    <button
-                      onClick={() => {
-                        const form = { templateId: template.id };
-                        localStorage.setItem('cv_draft', JSON.stringify(form));
-                        navigate(ROUTES.CREATENAMECV);
+                    <button                      onClick={() => {
+                        if (isAuthenticated()) {
+                          const form = { templateId: template.id };
+                          localStorage.setItem('cv_draft', JSON.stringify(form));
+                          navigate(ROUTES.CREATENAMECV);
+                        } else {
+                          onUnauthenticated();
+                        }
                       }}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
                     >
@@ -167,13 +172,16 @@ const TemplateCarousel = ({
           />
         ))}
       </div>      {/* Action Buttons */}
-      <div className="text-center mt-8">
-        <button 
+      <div className="text-center mt-8">        <button 
           className="mr-4 border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 py-2 px-6 rounded transition-colors font-medium"
           onClick={() => {
-            // Xóa bất kỳ template nào đã chọn trước đó
-            localStorage.removeItem('cv_draft');
-            navigate(ROUTES.CREATENAMECV);
+            if (isAuthenticated()) {
+              // Xóa bất kỳ template nào đã chọn trước đó
+              localStorage.removeItem('cv_draft');
+              navigate(ROUTES.CREATENAMECV);
+            } else {
+              onUnauthenticated();
+            }
           }}
         >
           Xem tất cả mẫu
@@ -181,9 +189,13 @@ const TemplateCarousel = ({
         <button 
           className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded transition-colors font-medium"
           onClick={() => {
-            // Xóa bất kỳ template nào đã chọn trước đó
-            localStorage.removeItem('cv_draft');
-            navigate(ROUTES.CREATENAMECV);
+            if (isAuthenticated()) {
+              // Xóa bất kỳ template nào đã chọn trước đó
+              localStorage.removeItem('cv_draft');
+              navigate(ROUTES.CREATENAMECV);
+            } else {
+              onUnauthenticated();
+            }
           }}
         >
           Tạo CV ngay

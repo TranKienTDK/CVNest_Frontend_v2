@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/routes/routes";
 import Header from "../../components/header/Header";
@@ -6,10 +6,34 @@ import HeroSection from "../../components/hero-section/HeroSection";
 import TemplateCarousel from "../../components/template-carousel/TemplateCarousel";
 import StatisticsSection from "@/components/statistics-section/StatisticsSection";
 import Footer from "../../components/footer/Footer";
+import AuthModal from "@/components/modals/AuthModal";
+import { isAuthenticated } from "@/helper/storage";
 import { ArrowRight } from "lucide-react";
 
 const Homepage = () => {
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalConfig, setAuthModalConfig] = useState({
+    title: "Yêu cầu đăng nhập",
+    description: "Bạn cần đăng nhập để sử dụng tính năng này."
+  });
+  
+  const handleCreateCV = () => {
+    if (isAuthenticated()) {
+      localStorage.removeItem('cv_draft');
+      navigate(ROUTES.CREATENAMECV);
+    } else {
+      setAuthModalConfig({
+        title: "Yêu cầu đăng nhập",
+        description: "Bạn cần đăng nhập để tạo CV."
+      });
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleFindJobs = () => {
+    navigate(ROUTES.JOBS);
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -21,6 +45,8 @@ const Homepage = () => {
         description="Tạo CV chuyên nghiệp trong vài phút với công cụ dễ sử dụng của chúng tôi và kết nối với hàng nghìn nhà tuyển dụng đang tìm kiếm tài năng như bạn."
         createCVButtonText="Tạo CV của bạn"
         findJobsButtonText="Tìm việc làm"
+        onCreateCVClick={handleCreateCV}
+        onFindJobsClick={handleFindJobs}
       />
 
       {/* Template Carousel */}
@@ -34,7 +60,15 @@ const Homepage = () => {
               Chọn từ bộ sưu tập các mẫu thiết kế chuyên nghiệp của chúng tôi để làm CV của bạn nổi bật.
             </p>
           </div>
-          <TemplateCarousel />
+          <TemplateCarousel 
+            onUnauthenticated={() => {
+              setAuthModalConfig({
+                title: "Yêu cầu đăng nhập",
+                description: "Bạn cần đăng nhập để sử dụng mẫu CV này."
+              });
+              setShowAuthModal(true);
+            }}
+          />
         </div>
       </section>
 
@@ -54,10 +88,7 @@ const Homepage = () => {
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
             <div 
               className="flex flex-col items-center text-center p-8 rounded-lg border bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => {
-                localStorage.removeItem('cv_draft');
-                navigate(ROUTES.CREATENAMECV);
-              }}
+              onClick={handleCreateCV}
             >
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <svg
@@ -85,10 +116,7 @@ const Homepage = () => {
 
             <div 
               className="flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => {
-                localStorage.removeItem('cv_draft');
-                navigate(ROUTES.CREATENAMECV);
-              }}
+              onClick={handleCreateCV}
             >
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <svg
@@ -150,6 +178,14 @@ const Homepage = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Auth Modal */}
+      <AuthModal 
+        open={showAuthModal} 
+        onOpenChange={setShowAuthModal}
+        title={authModalConfig.title}
+        description={authModalConfig.description}
+      />
     </div>
   );
 };

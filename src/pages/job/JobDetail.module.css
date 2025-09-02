@@ -134,7 +134,6 @@
   line-height: 1.6;
 }
 
-/* Section-specific styling */
 .requirementsSection {
   background-color: #f8f9fc;
   border-radius: 8px;
@@ -180,7 +179,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* Requirements list styling */
 .requirementsList {
   display: flex;
   flex-direction: column;
@@ -202,7 +200,6 @@
   margin-top: 8px;
 }
 
-/* Benefits list styling */
 .benefitsList {
   display: flex;
   flex-direction: column;
@@ -281,20 +278,59 @@
   gap: 10px;
 }
 
-.bookmark {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 24px;
-  color: #ddd;
+.applicationsSection {
+  padding: 25px 30px;
+  border-top: 1px solid #eee;
+  background-color: #fafafa;
 }
 
-.bookmark:hover,
-.bookmarked {
-  color: #f5a623;
+.applicationsSection .sectionTitle {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #205781;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.applicationsSection :global(.ant-table-wrapper) {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.applicationsSection :global(.ant-table-thead > tr > th) {
+  background-color: #f0f7ff;
+  color: #205781;
+  font-weight: 600;
+}
+
+.applicationsSection :global(.ant-table-tbody > tr:hover > td) {
+  background-color: #f0f7ff;
+}
+
+.applicationsSection :global(.ant-table-tbody > tr > td) {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.applicationsSection :global(.ant-table-container) {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.applicationsSection :global(.ant-badge-status-green) {
+  background-color: #52c41a;
+}
+
+.applicationsSection :global(.ant-badge-status-red) {
+  background-color: #f5222d;
+}
+
+.applicationsSection :global(.ant-badge-status-blue) {
+  background-color: #1890ff;
 }
 
 @media (max-width: 768px) {
@@ -319,5 +355,15 @@
 
   .actionsBar {
     justify-content: center;
+  }
+
+  .applicationsSection {
+    padding: 20px 15px;
+  }
+  
+  .applicationsSection :global(.ant-table-thead > tr > th),
+  .applicationsSection :global(.ant-table-tbody > tr > td) {
+    padding: 8px 10px;
+    font-size: 14px;
   }
 }

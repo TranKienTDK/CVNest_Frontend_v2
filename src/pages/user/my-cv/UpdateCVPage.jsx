@@ -49,6 +49,7 @@ const transformApiDataToFormData = (apiData) => {
       avatar: apiData.info?.avatar || "",
     },
 
+    profile: apiData.profile || "",
     introduction: apiData.profile || "",
 
     experiences: Array.isArray(apiData.experiences)
@@ -156,7 +157,7 @@ const transformApiDataToFormData = (apiData) => {
 const prepareDataForAPI = (formData) => {
   const preparedData = {
     templateId: formData.templateId || 1,
-    profile: formData.introduction || "",
+    profile: formData.introduction || formData.about || "",
     cvName: formData.name || "",
     additionalInfo: formData.additionalInfo || "",
 
@@ -176,6 +177,7 @@ const prepareDataForAPI = (formData) => {
       address: formData.personalInfo?.address || "",
       linkedin: formData.personalInfo?.linkedin || "",
       github: formData.personalInfo?.github || "",
+      avatar: formData.personalInfo?.avatar || formData.avatar || "",
     },
 
     experiences: Array.isArray(formData.workExperience)
@@ -375,7 +377,7 @@ function UpdateCVPage() {
 
       toast.success("Cập nhật CV thành công!");
 
-      navigate(ROUTES.CV_MANAGEMENT);
+      navigate(ROUTES.CVMANAGEMENT);
     } catch (error) {
       console.error("Error updating CV:", error);
       toast.error("Cập nhật CV thất bại. Vui lòng thử lại!");

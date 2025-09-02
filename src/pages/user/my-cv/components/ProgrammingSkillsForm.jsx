@@ -7,7 +7,7 @@ import {cn} from "@/lib/utils.js";
 import styles from "@/pages/user/my-cv/style.module.css";
 import {ArrowUp, Trash} from "lucide-react";
 
-const predefinedSkillList = ["React", "JavaScript", "Node.js", "Python", "TypeScript", "Java"];
+const predefinedSkillList = ["React", "JavaScript", "Node.js", "Python", "TypeScript", "Java", "Spring Boot", "C#", "PHP", "Ruby", "Go", "Swift", "Kotlin", "Django", "Flask", "Angular", "Vue.js", "HTML", "CSS", "SQL", "NoSQL", "Cisco IOS", "VLAN & Routing Protocols (OSPF, EIGRP)", "Firewall & Security (pfSense, FortiGate)", "Network Monitoring (Zabbix, Nagios)"];
 
 export default function ProgrammingSkillsForm() {
     const {formCreate} = useCreateCV();

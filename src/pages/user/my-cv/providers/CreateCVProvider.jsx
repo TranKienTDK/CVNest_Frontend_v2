@@ -5,7 +5,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {v4} from "uuid";
 import dayjs from "dayjs";
-import {CreateCVContext} from "@/pages/user/my-cv/contexts/CreateCVContext.js";
+import {CreateCVContext, useCreateCV} from "@/pages/user/my-cv/contexts/CreateCVContext.js";
 import {
     itemDefaultActivity,
     itemDefaultCertificate,
@@ -33,6 +33,7 @@ const schema = z.object({
     github: z.string().url("URL Github không hợp lệ").optional(),
     jobStatus: z.string().optional(),
     expectedSalary: z.any(),
+    avatar: z.string().optional(),
     about: z.string().min(1, "Giới thiệu bản thân là bắt buộc"),
     hasExperience: z.boolean(),
     experiences: z.array(
@@ -118,6 +119,7 @@ const schema = z.object({
 // Tạo Provider
 export const CreateCVProvider = ({children, initialData}) => {
     const isFirstRender = React.useRef(true);
+    const [validationIssues, setValidationIssues] = useState([]);
 
     const formCreate = useForm({
         resolver: zodResolver(schema),
@@ -134,6 +136,7 @@ export const CreateCVProvider = ({children, initialData}) => {
             github: initialData?.personalInfo?.github || "",
             jobStatus: initialData?.personalInfo?.jobStatus || "",
             expectedSalary: initialData?.personalInfo?.expectedSalary || "",
+            avatar: initialData?.personalInfo?.avatar || "",
             about: initialData?.introduction || "",
             hasExperience: initialData?.experiences?.length > 0 || false,
             experiences: initialData?.experiences?.length > 0 
@@ -175,7 +178,7 @@ export const CreateCVProvider = ({children, initialData}) => {
                     field: edu.field || edu.degree || "",
                     startDate: edu.startDate ? dayjs(edu.startDate) : null,
                     endDate: edu.endDate ? dayjs(edu.endDate) : null,
-                    isCurrent: !edu.endDate,
+                    isCurrent: edu.endDate ? false : true,
                     description: edu.description || ""
                 }))
                 : [{...itemDefaultEducation, id: v4()}],
@@ -302,6 +305,65 @@ export const CreateCVProvider = ({children, initialData}) => {
     
     const [listDetailInfoShowing, setListDetailInfoShowing] = useState(initialShowingItems);
 
+    // Monitor form errors and update validationIssues state
+    useEffect(() => {
+        const subscription = formCreate.watch(() => {
+            // Get current errors
+            const currentErrors = formCreate.formState.errors;
+            
+            // If there are errors, log them to console and update state
+            if (Object.keys(currentErrors).length > 0) {
+                const errorList = [];
+                
+                // Convert the nested error object to a flat array for easier display
+                const processErrors = (errors, path = '') => {
+                    Object.entries(errors).forEach(([key, value]) => {
+                        const currentPath = path ? `${path}.${key}` : key;
+                        
+                        if (value.message) {
+                            errorList.push({
+                                path: currentPath,
+                                message: value.message
+                            });
+                        }
+                        
+                        // Handle array errors
+                        if (value.type === "array" && value.message) {
+                            errorList.push({
+                                path: currentPath,
+                                message: value.message
+                            });
+                        }
+                        
+                        // Handle nested objects and arrays with errors
+                        if (typeof value === 'object' && !value.message) {
+                            if (Array.isArray(value)) {
+                                value.forEach((item, index) => {
+                                    if (item && typeof item === 'object') {
+                                        processErrors(item, `${currentPath}[${index}]`);
+                                    }
+                                });
+                            } else {
+                                processErrors(value, currentPath);
+                            }
+                        }
+                    });
+                };
+                
+                processErrors(currentErrors);
+                
+                // Log validation issues to console
+                console.log("Schema Validation Issues:", errorList);
+                setValidationIssues(errorList);
+            } else {
+                setValidationIssues([]);
+            }
+        });
+        
+        // Cleanup subscription
+        return () => subscription.unsubscribe();
+    }, [formCreate]);
+
     // Update form values when initialData changes (for update CV scenario)
     useEffect(() => {
         // Skip the first render as the form is already initialized with defaultValues
@@ -326,6 +388,7 @@ export const CreateCVProvider = ({children, initialData}) => {
                 github: initialData?.personalInfo?.github || "",
                 jobStatus: initialData?.personalInfo?.jobStatus || "",
                 expectedSalary: initialData?.personalInfo?.expectedSalary || "",
+                avatar: initialData?.personalInfo?.avatar || "",
                 about: initialData?.introduction || "",
                 hasExperience: initialData?.experiences?.length > 0 || false,
                 experiences: initialData?.experiences?.length > 0 
@@ -366,7 +429,7 @@ export const CreateCVProvider = ({children, initialData}) => {
                         field: edu.field || edu.degree || "",
                         startDate: edu.startDate ? dayjs(edu.startDate) : null,
                         endDate: edu.endDate ? dayjs(edu.endDate) : null,
-                        isCurrent: !edu.endDate,
+                        isCurrent: edu.endDate ? false : true,
                         description: edu.description || ""
                     }))
                     : [{...itemDefaultEducation, id: v4()}],
@@ -448,9 +511,58 @@ export const CreateCVProvider = ({children, initialData}) => {
         }
     }, [initialData, formCreate]);
 
+    // Auto-save mechanism
+    useEffect(() => {
+        const subscription = formCreate.watch((data) => {
+            try {
+                const draft = localStorage.getItem("cv_draft");
+                if (draft) {
+                    const currentDraft = JSON.parse(draft);
+                    
+                    // Create updated draft with form data
+                    const updatedDraft = {
+                        ...currentDraft,
+                        personalInfo: {
+                            ...currentDraft.personalInfo,
+                            fullname: data.fullname || currentDraft.personalInfo?.fullname,
+                            position: data.position || currentDraft.personalInfo?.position,
+                            email: data.email || currentDraft.personalInfo?.email,
+                            phone: data.phone || currentDraft.personalInfo?.phone,
+                            gender: data.gender || currentDraft.personalInfo?.gender,
+                            dob: data.dob || currentDraft.personalInfo?.dob,
+                            city: data.city || currentDraft.personalInfo?.city,
+                            address: data.address || currentDraft.personalInfo?.address,
+                            linkedin: data.linkedin || currentDraft.personalInfo?.linkedin,
+                            github: data.github || currentDraft.personalInfo?.github,
+                            avatar: data.avatar || currentDraft.personalInfo?.avatar,
+                        },
+                        profile: data.about || currentDraft.profile,
+                        introduction: data.about || currentDraft.introduction,
+                        experiences: data.experiences || currentDraft.experiences,
+                        skills: data.skills || currentDraft.skills,
+                        education: data.educations || currentDraft.education,
+                        projects: data.projects || currentDraft.projects,
+                        languages: data.languages || currentDraft.languages,
+                        interests: data.interests || currentDraft.interests,
+                        certificates: data.certificates || currentDraft.certificates,
+                        activities: data.activities || currentDraft.activities,
+                        consultants: data.consultants || currentDraft.consultants,
+                        others: data.others || currentDraft.others,
+                    };
+                    
+                    localStorage.setItem("cv_draft", JSON.stringify(updatedDraft));
+                }
+            } catch (error) {
+                console.error("Error auto-saving CV data:", error);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [formCreate]);
+
     const value = {
         formCreate,
-
+        validationIssues,
         listDetailInfo, setListDetailInfo,
         listDetailInfoShowing, setListDetailInfoShowing
     }
@@ -461,3 +573,6 @@ export const CreateCVProvider = ({children, initialData}) => {
         </CreateCVContext.Provider>
     );
 };
+
+// Export the hook for convenience
+export { useCreateCV };

@@ -45,7 +45,7 @@ class WebSocketService {
         this.connected = true;
 
         // Handle any subscriptions that were requested before connection was established
-        this.subscriptions.forEach((topic, callback) => {
+        this.subscriptions.forEach((callback, topic) => {
           this.subscribeToTopic(topic, callback);
         });
 
@@ -64,22 +64,25 @@ class WebSocketService {
 
     this.client.activate();
   }
-
   subscribeToTopic(topic, callback) {
     if (!this.client) {
       console.warn(`Not connected to WebSocket. Will subscribe to ${topic} when connected.`);
       this.subscriptions.set(topic, callback);
       this.connect();
-      return;
+      return null;
     }
 
     if (!this.connected) {
       console.warn(`Waiting for connection to subscribe to ${topic}`);
       this.subscriptions.set(topic, callback);
-      return;
+      return null;
     }
 
-    console.log(`Subscribing to topic: ${topic}`);
+    // Check if already subscribed to this topic
+    if (this.messageCallbacks.has(topic)) {
+      console.log(`Already subscribed to topic: ${topic}`);
+      return this.messageCallbacks.get(topic);
+    }    console.log(`Subscribing to topic: ${topic}`);
     const subscription = this.client.subscribe(topic, (message) => {
       try {
         const parsedMessage = JSON.parse(message.body);
@@ -91,6 +94,8 @@ class WebSocketService {
     });
 
     this.messageCallbacks.set(topic, subscription);
+    // Remove from pending subscriptions since it's now active
+    this.subscriptions.delete(topic);
     return subscription;
   }
 
@@ -117,9 +122,7 @@ class WebSocketService {
       this.messageCallbacks.clear();
       console.log('WebSocket disconnected');
     }
-  }
-
-  // Subscribe to user specific notifications
+  }  // Subscribe to user specific notifications
   subscribeToUserNotifications(userId, callback) {
     const userTopic = `/user/${userId}/topic/notifications`;
     return this.subscribeToTopic(userTopic, callback);
@@ -132,6 +135,17 @@ class WebSocketService {
     } else {
       this.connectCallbacks.push(callback);
     }
+  }
+  // Check if WebSocket is connected
+  isConnected() {
+    return this.connected && this.client && this.client.connected;
+  }
+  // Force reconnection
+  reconnect() {
+    this.disconnect();
+    setTimeout(() => {
+      this.connect();
+    }, 1000);
   }
 }
 

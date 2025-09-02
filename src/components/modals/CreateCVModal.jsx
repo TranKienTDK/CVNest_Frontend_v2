@@ -34,7 +34,7 @@ const CreateCVModal = ({ isOpen, onClose }) => {
             </label>
             <Input
               type="text"
-              placeholder="Ví dụ: Nguyễn Văn A - Kĩ sư phần mềm"
+              placeholder="Ví dụ: Eric Johnson - Kĩ sư phần mềm"
               value={cvName}
               onChange={(e) => setCvName(e.target.value)}
               required

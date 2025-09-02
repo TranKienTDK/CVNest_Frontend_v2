@@ -8,6 +8,14 @@ const applyAPI = {
       jobId,
       cvId
     });
+  },      
+  
+  // API kiểm tra trạng thái ứng tuyển của user
+  checkUserAppliedJob: (jobId, cvId) => {
+    return API.post('/apply/status', {
+      jobId,
+      cvId
+    });
   },
   
   // API lấy danh sách các ứng tuyển của người dùng

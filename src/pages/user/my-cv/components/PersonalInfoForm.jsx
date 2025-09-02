@@ -1,7 +1,7 @@
 import styles from "@/pages/user/my-cv/style.module.css";
 import React, {useState} from "react";
-import {Button, DatePicker, Input, Modal, Radio, Select, Upload,} from "antd";
-import {UploadOutlined} from "@ant-design/icons";
+import {Button, DatePicker, Input, Modal, Radio, Select, Upload, Spin} from "antd";
+import {UploadOutlined, LoadingOutlined} from "@ant-design/icons";
 import {Controller} from "react-hook-form";
 import {useCreateCV} from "@/pages/user/my-cv/contexts/CreateCVContext";
 import {cn} from "@/lib/utils.js";
@@ -13,6 +13,7 @@ import EducationForm from "@/pages/user/my-cv/components/EducationForm.jsx";
 import DetailInfoSection from "@/pages/user/my-cv/components/DetailInfoSection.jsx";
 import dayjs from "dayjs";
 import cvAPI from "@/api/cv";
+import userAPI from "@/api/user";
 import {toast} from "react-toastify";
 import { useNavigate, useParams} from "react-router-dom";
 import { ROUTES } from "@/routes/routes";
@@ -33,12 +34,87 @@ function PersonalInfoForm() {
     } = formCreate;
 
     const [openSample, setOpenSample] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const handleOpenSample = () => setOpenSample(true);
     const handleCloseSample = () => setOpenSample(false);
 
+    const handleAvatarUpload = async (file) => {
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF)!');
+            return false;
+        }
+
+        if (file.size > maxSize) {
+            toast.error('Kích thước file không được vượt quá 5MB!');
+            return false;
+        }
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await userAPI.uploadAvatar(formData);
+            console.log('Upload response:', response.data);
+            
+            // Assuming the API returns the URL in response.data.url or response.data.data.url
+            const avatarUrl = response.data?.url || response.data?.data || response.data;
+            
+            if (avatarUrl) {
+                // Update form control with the cloudinary URL
+                formCreate.setValue('avatar', avatarUrl);
+                console.log("Avatar URL set to form:", avatarUrl);
+                
+                // Verify the form value was set correctly
+                setTimeout(() => {
+                    const currentAvatarValue = formCreate.getValues('avatar');
+                    console.log("Current avatar value in form after setValue:", currentAvatarValue);
+                }, 100);
+                
+                // Update localStorage with new avatar URL
+                const draft = localStorage.getItem('cv_draft');
+                if (draft) {
+                    const draftData = JSON.parse(draft);
+                    // Ensure info object exists
+                    if (!draftData.info) {
+                        draftData.info = {};
+                    }
+                    draftData.info.avatar = avatarUrl;
+                    localStorage.setItem('cv_draft', JSON.stringify(draftData));
+                    console.log("Avatar URL saved to localStorage:", avatarUrl);
+                }
+                
+                toast.success('Tải ảnh lên thành công!');
+            } else {
+                toast.error('Không thể lấy URL ảnh từ server!');
+            }
+            
+            return false; // Prevent default upload behavior
+        } catch (error) {
+            console.error('Upload avatar error:', error);
+            const errorMessage = error.response?.data?.message || 'Tải ảnh lên thất bại. Vui lòng thử lại!';
+            toast.error(errorMessage);
+            return false;
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const onSubmit = handleSubmit(async (formData) => {
         console.log(isEditMode ? "update: " : "create: ", formData);
+        console.log("Avatar from formData:", formData.avatar);
+        
+        // Also check localStorage draft for avatar
+        const draftFromStorage = localStorage.getItem('cv_draft');
+        if (draftFromStorage) {
+            const draftData = JSON.parse(draftFromStorage);
+            console.log("Avatar from localStorage draft:", draftData.info?.avatar);
+        }
         
         const programmingSkillsFlat = (formData.skills || []).map((skillObj) => ({
             ...(isEditMode ? { id: skillObj.id } : {}),
@@ -113,6 +189,10 @@ function PersonalInfoForm() {
         const draft = localStorage.getItem('cv_draft');
         const templateId = draft ? JSON.parse(draft).templateId : null;
         const cvName = draft ? JSON.parse(draft).name : null;
+        const draftData = draft ? JSON.parse(draft) : null;
+        
+        const avatarUrl = formData.avatar || draftData?.info?.avatar || "";
+        console.log("Final avatar URL to be used:", avatarUrl);
         
         const payload = {
             templateId: templateId || 1,
@@ -130,7 +210,7 @@ function PersonalInfoForm() {
                 gender: formData.gender || "OTHER",
                 address: formData.address || "",
                 city: formData.city || "",
-                avatar: formData.avatar || "",
+                avatar: avatarUrl,
                 linkedin: formData.linkedin || "",
                 github: formData.github || "",
             },
@@ -211,12 +291,12 @@ function PersonalInfoForm() {
                 } else {
                     // Real API call
                     await cvAPI.updateCV(id, payload);
-                    toast.success("CV updated successfully!");
+                    toast.success("CV được cập nhật thành công");
                     navigate(ROUTES.CVMANAGEMENT);
                 }
             } catch (err) {
-                console.error("Error updating CV:", err);
-                toast.error("Failed to update CV. Please try again: " + (err.response?.data?.message || err.message));
+                console.error("Lỗi khi cập nhật CV:", err);
+                toast.error("Lỗi khi cập nhật CV. Vui lòng thử lại " + (err.response?.data?.message || err.message));
             }
         }
     })
@@ -368,8 +448,9 @@ function PersonalInfoForm() {
                                     render={({field}) => (
                                         <Select {...field} placeholder="Chọn thành phố"
                                                 className={cn("select-dropdown-custom", styles.formSelect)}>
-                                            <Option value="50">TP. Hồ Chí Minh</Option>
-                                            <Option value="29">Hà Nội</Option>
+                                            <Option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</Option>
+                                            <Option value="Hà Nội">Hà Nội</Option>
+                                            <Option value="Đà Nẵng">Đà Nẵng</Option>
                                         </Select>
                                     )}
                                 />
@@ -390,14 +471,9 @@ function PersonalInfoForm() {
                                 render={({field: {value, onChange}}) => (
                                     <Upload
                                         showUploadList={false}
-                                        beforeUpload={(file) => {
-                                            const reader = new FileReader();
-                                            reader.onload = (e) => {
-                                                onChange(e.target.result);
-                                            };
-                                            reader.readAsDataURL(file);
-                                            return false; // Prevent auto upload
-                                        }}
+                                        beforeUpload={handleAvatarUpload}
+                                        accept="image/*"
+                                        disabled={uploading}
                                     >
                                         {value ? (
                                             <div className="w-full h-full absolute inset-0">
@@ -408,20 +484,37 @@ function PersonalInfoForm() {
                                                 />
                                                 <div
                                                     className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                    <button 
-                                                        type="button" 
-                                                        className="text-white text-sm flex flex-col items-center">
-                                                        Thay đổi ảnh
-                                                        <UploadOutlined className="mt-1"/>
-                                                    </button>
+                                                    {uploading ? (
+                                                        <Spin 
+                                                            indicator={<LoadingOutlined style={{ fontSize: 24, color: 'white' }} spin />} 
+                                                        />
+                                                    ) : (
+                                                        <button 
+                                                            type="button" 
+                                                            className="text-white text-sm flex flex-col items-center"
+                                                            disabled={uploading}>
+                                                            Thay đổi ảnh
+                                                            <UploadOutlined className="mt-1"/>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ) : (
                                             <button
                                                 type="button"
-                                                className="text-gray-600 hover:text-black text-sm flex flex-col items-center">
-                                                Thêm ảnh
-                                                <UploadOutlined className="mt-1"/>
+                                                className={`text-gray-600 hover:text-black text-sm flex flex-col items-center ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                disabled={uploading}>
+                                                {uploading ? (
+                                                    <>
+                                                        <Spin indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} />
+                                                        <span className="mt-1">Đang tải...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Thêm ảnh
+                                                        <UploadOutlined className="mt-1"/>
+                                                    </>
+                                                )}
                                             </button>
                                         )}
                                     </Upload>

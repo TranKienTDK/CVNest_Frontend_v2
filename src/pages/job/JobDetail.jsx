@@ -1,26 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Typography, Button, Space, Tooltip, Table, Empty, Modal, Radio, Spin, Tag, List, Badge, message } from "antd";
+import { BookmarkPlus, BookmarkCheck, Eye, CheckCircle, XCircle } from "lucide-react";
+import dayjs from "dayjs";
+import { isAuthenticated, getUserRole, getUserData } from "@/helper/storage";
+import AuthModal from "@/components/modals/AuthModal";
+
 import { TemplateCV1 } from "@/pages/user/my-cv/components/CVTemplate/TemplateCV1";
 import TemplateCV2 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV2";
 import TemplateCV3 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV3";
 import TemplateCV4 from "@/pages/user/my-cv/components/CVTemplate/TemplateCV4";
-import sampleDataCV4 from "@/pages/user/my-cv/components/CVTemplate/sampleDataCV4";
 import { PDFViewer } from "@react-pdf/renderer";
-import {
-  Typography,
-  Tag,
-  Button,
-  Modal,
-  Radio,
-  Space,
-  List,
-  Spin,
-  Empty,
-  Table,
-  Badge,
-  Tooltip,
-  message,
-} from "antd";
 import {
   Briefcase,
   Building2,
@@ -31,19 +21,16 @@ import {
   MapPin,
   Users,
   Bookmark,
-  Share2,
   FileText,
-  Eye,
   AlertCircle,
-  CheckCircle,
-  XCircle,
   Clock8,
+  Star,
+  Share2,
 } from "lucide-react";
-import { isAuthenticated, getUserRole, getUserData } from "@/helper/storage";
 import jobAPI from "../../api/job";
 import companyAPI from "../../api/company";
 import cvAPI from "../../api/cv";
-import applyAPI from "../../api/apply"; // Import API ứng tuyển
+import applyAPI from "../../api/apply";
 import Header from "../../components/header/Header";
 import styles from "./JobDetail.module.css";
 import { toast } from "react-toastify";
@@ -54,68 +41,190 @@ import { CreateCVProvider } from "../user/my-cv/providers/CreateCVProvider";
 
 const { Title, Paragraph, Text } = Typography;
 
-// Hàm helper để phân tích mô tả thành các phần
+const transformApiDataToFormData = (apiData) => {
+  if (!apiData) return null;
+
+  const formattedData = {
+    id: apiData.id,
+    name: apiData.cvName || apiData.name,
+    templateId: apiData.templateId || 1,
+
+    personalInfo: {
+      id: apiData.info?.id,
+      fullname: apiData.info?.fullName || "",
+      position: apiData.info?.position || "",
+      email: apiData.info?.email || "",
+      phone: apiData.info?.phone || "",
+      gender: apiData.info?.gender || "",
+      dob: apiData.info?.dob || null,
+      city: apiData.info?.city || "",
+      address: apiData.info?.address || "",
+      linkedin: apiData.info?.linkedin || "",
+      github: apiData.info?.github || "",
+      jobStatus: apiData.info?.jobStatus || "",
+      expectedSalary: apiData.info?.expectedSalary || "",
+      avatar: apiData.info?.avatar || "",
+    },
+
+    profile: apiData.profile || "",
+
+    experiences: Array.isArray(apiData.experiences)
+      ? apiData.experiences.map((exp) => {
+        return {
+          id: exp.id || Date.now(),
+          company: exp.company || "",
+          position: exp.position || "",
+          startDate: exp.startDate ? dayjs(exp.startDate) : null,
+          endDate: exp.endDate ? dayjs(exp.endDate) : null,
+          isCurrent: !exp.endDate,
+          description: exp.description || "",
+          usageTechnologies: exp.usageTechnologies || "",
+        };
+      })
+      : [],
+
+    skills: Array.isArray(apiData.skills)
+      ? apiData.skills.map((skill) => ({
+        id: skill.id || Date.now(),
+        skill: skill.name || "",
+        rate: skill.rate || 0,
+      }))
+      : [],
+
+    education: Array.isArray(apiData.educations)
+      ? apiData.educations.map((edu) => ({
+        id: edu.id || Date.now(),
+        school: edu.school || "",
+        field: edu.field || "",
+        startDate: edu.startDate ? dayjs(edu.startDate) : null,
+        endDate: edu.endDate ? dayjs(edu.endDate) : null,
+        description: edu.description || "",
+      }))
+      : [],
+
+    projects: Array.isArray(apiData.projects)
+      ? apiData.projects.map((p) => ({
+        id: p.id || Date.now(),
+        project: p.project || "",
+        startDate: p.startDate ? dayjs(p.startDate) : null,
+        endDate: p.endDate ? dayjs(p.endDate) : null,
+        description: p.description || "",
+      }))
+      : [],
+
+    interests: Array.isArray(apiData.interests)
+      ? apiData.interests.map((h) => ({
+        id: h.id || Date.now(),
+        interest: h.interest || "",
+      }))
+      : [],
+
+    hobbies: Array.isArray(apiData.interests)
+      ? apiData.interests.map((h) => ({
+        id: h.id || Date.now(),
+        name: h.interest || "",
+      }))
+      : [],
+
+    consultants: Array.isArray(apiData.consultants)
+      ? apiData.consultants.map((c) => ({
+        id: c.id || Date.now(),
+        name: c.name || "",
+        position: c.position || "",
+        email: c.email || "",
+        phone: c.phone || "",
+      }))
+      : [],
+
+    languages: Array.isArray(apiData.languages)
+      ? apiData.languages.map((l) => ({
+        id: l.id || Date.now(),
+        language: l.language || "",
+        level: l.level || "",
+      }))
+      : [],
+
+    activities: Array.isArray(apiData.activities)
+      ? apiData.activities.map((a) => ({
+        id: a.id || Date.now(),
+        activity: a.activity || "",
+        startDate: a.startDate ? dayjs(a.startDate) : null,
+        endDate: a.endDate ? dayjs(a.endDate) : null,
+        isCurrent: !a.endDate,
+        description: a.description || "",
+      }))
+      : [],
+
+    certificates: Array.isArray(apiData.certificates)
+      ? apiData.certificates.map((c) => ({
+        id: c.id || Date.now(),
+        certificate: c.certificate || "",
+        date: c.date ? dayjs(c.date) : null,
+        description: c.description || "",
+      }))
+      : [],
+
+    additionalInfo: apiData.additionalInfo || "",
+  };
+
+  return formattedData;
+};
+
 const parseDescription = (description) => {
   if (!description) return [];
 
-  // Định nghĩa các section với title hiển thị và các từ khóa để match
   const sectionDefinitions = [
-    { 
-      title: "Mô tả công việc", 
-      key: "jobDescription", 
-      keywords: ["responsibilities", "mô tả công việc", "nhiệm vụ", "job description"] 
+    {
+      title: "Mô tả công việc",
+      key: "jobDescription",
+      keywords: ["responsibilities", "mô tả công việc", "nhiệm vụ", "job description"]
     },
-    { 
-      title: "Yêu cầu công việc", 
-      key: "requirements", 
-      keywords: ["requirements", "yêu cầu", "qualifications", "kinh nghiệm"] 
+    {
+      title: "Yêu cầu công việc",
+      key: "requirements",
+      keywords: ["requirements", "yêu cầu", "qualifications", "kinh nghiệm"]
     },
-    { 
-      title: "Quyền lợi", 
-      key: "benefits", 
-      keywords: ["benefits", "quyền lợi", "chế độ", "đãi ngộ", "phúc lợi"] 
+    {
+      title: "Quyền lợi",
+      key: "benefits",
+      keywords: ["benefits", "quyền lợi", "chế độ", "đãi ngộ", "phúc lợi"]
     },
-    { 
-      title: "Học vấn", 
-      key: "education", 
-      keywords: ["education", "học vấn", "bằng cấp", "bachelor", "master", "degree"] 
+    {
+      title: "Học vấn",
+      key: "education",
+      keywords: ["education", "học vấn", "bằng cấp", "bachelor", "master", "degree"]
     },
-    { 
-      title: "Chứng chỉ", 
-      key: "certification", 
-      keywords: ["certification", "chứng chỉ"] 
+    {
+      title: "Chứng chỉ",
+      key: "certification",
+      keywords: ["certification", "chứng chỉ"]
     },
-    { 
-      title: "Lương thưởng", 
-      key: "salary", 
-      keywords: ["salary", "lương", "thưởng", "compensation"] 
+    {
+      title: "Lương thưởng",
+      key: "salary",
+      keywords: ["salary", "lương", "thưởng", "compensation"]
     }
   ];
 
-  // Phân tách mô tả thành các phần riêng biệt dựa trên tiêu đề
   const result = {};
   let currentSection = null;
   let currentContent = [];
-  
+
   const lines = description.split("\n");
-  
-  // Tìm các section dựa vào từ khóa viết hoa hoặc chữ in đậm
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    
-    // Kiểm tra xem dòng hiện tại có phải là tiêu đề section không
-    const isSection = line === line.toUpperCase() || 
-                     /^(REQUIREMENTS|RESPONSIBILITIES|BENEFITS|EDUCATION|CERTIFICATION|SALARY)/.test(line);
-    
+
+    const isSection = line === line.toUpperCase() ||
+      /^(REQUIREMENTS|RESPONSIBILITIES|BENEFITS|EDUCATION|CERTIFICATION|SALARY)/.test(line);
+
     if (isSection) {
-      // Nếu đã có section trước đó, lưu content vào result
       if (currentSection) {
         result[currentSection] = currentContent.join('\n');
         currentContent = [];
       }
-      
-      // Tìm section phù hợp
+
       let foundSection = null;
       for (const section of sectionDefinitions) {
         if (section.keywords.some(keyword => line.toLowerCase().includes(keyword.toLowerCase()))) {
@@ -124,8 +233,7 @@ const parseDescription = (description) => {
           break;
         }
       }
-      
-      // Nếu không tìm thấy section cụ thể, tạo một section với tên là dòng hiện tại
+
       if (!foundSection) {
         currentSection = line.toLowerCase().replace(/\s+/g, '_');
         sectionDefinitions.push({
@@ -137,7 +245,6 @@ const parseDescription = (description) => {
     } else if (currentSection) {
       currentContent.push(line);
     } else {
-      // Nếu chưa có section nào và cũng không phải tiêu đề, đưa vào phần mô tả công việc
       if (!result.jobDescription) {
         result.jobDescription = [];
       }
@@ -146,18 +253,15 @@ const parseDescription = (description) => {
       }
     }
   }
-  
-  // Lưu nội dung của section cuối cùng
+
   if (currentSection && currentContent.length > 0) {
     result[currentSection] = currentContent.join('\n');
   }
-  
-  // Xử lý trường hợp jobDescription là array
+
   if (Array.isArray(result.jobDescription)) {
     result.jobDescription = result.jobDescription.join('\n');
   }
 
-  // Tạo mảng các section để hiển thị
   return sectionDefinitions
     .filter(section => result[section.key])
     .map(section => ({
@@ -167,7 +271,6 @@ const parseDescription = (description) => {
     }));
 };
 
-// Hàm helper để định dạng loại hợp đồng
 const formatContract = (contract) => {
   if (!contract) return "Không xác định";
 
@@ -180,7 +283,6 @@ const formatContract = (contract) => {
   return contractMapping[contract] || contract;
 };
 
-// Hàm helper để định dạng loại công việc
 const formatJobType = (jobType) => {
   if (!jobType) return "Không xác định";
 
@@ -193,7 +295,6 @@ const formatJobType = (jobType) => {
   return jobTypeMapping[jobType] || jobType;
 };
 
-// Hàm helper để định dạng cấp bậc
 const formatLevel = (level) => {
   if (!level) return "Không xác định";
 
@@ -226,8 +327,13 @@ const JobDetail = () => {
   const [applyLoading, setApplyLoading] = useState(false);
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  const [applicationsWithDetails, setApplicationsWithDetails] = useState([]);
+  const [cvDetailsCache, setCvDetailsCache] = useState({});
+  const [userApplications, setUserApplications] = useState([]);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [loadingUserApplications, setLoadingUserApplications] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Lấy thông tin đăng nhập và vai trò người dùng
   const isLoggedIn = isAuthenticated();
   const userRole = getUserRole();
   const userData = getUserData();
@@ -248,21 +354,32 @@ const JobDetail = () => {
         setCompany(companyResponse.data.data);
 
         if (isLoggedIn) {
-          // Get user CVs
           if (isUser) {
             setLoadingCVs(true);
             const cvsResponse = await cvAPI.getCvs(getUserData().id);
             setUserCVs(cvsResponse.data.data || []);
             setLoadingCVs(false);
-          }
 
-          // Fetch applications if user is HR
+            setLoadingUserApplications(true);
+            try {
+              const userApplicationsResponse = await applyAPI.getUserApplications(getUserData().id);
+              console.log("User applications:", userApplicationsResponse.data.data);
+              const userApps = userApplicationsResponse.data.data || [];
+              setUserApplications(userApps);
+              
+              const appliedToCurrentJob = userApps.some(app => app.jobId === parseInt(id) || app.jobId === id);
+              setHasApplied(appliedToCurrentJob);
+              console.log("User has applied to this job:", appliedToCurrentJob);
+            } catch (error) {
+              console.error("Error fetching user applications:", error);
+            }
+            setLoadingUserApplications(false);
+          }
           if (isHR) {
             setLoadingApplications(true);
             try {
-              const applicationsResponse = await applyAPI.getApplicationsByJob(
-                id
-              );
+              const applicationsResponse = await applyAPI.getJobApplications(id);
+              console.log("Applications data:", applicationsResponse.data.data);
               setApplications(applicationsResponse.data.data || []);
             } catch (error) {
               console.error("Error fetching applications:", error);
@@ -281,11 +398,54 @@ const JobDetail = () => {
     fetchJobDetail();
   }, [id, isLoggedIn, isHR, isUser]);
 
+  useEffect(() => {
+    const fetchApplicationDetails = async () => {
+      if (!applications.length) return;
+
+      try {
+        const updatedApps = await Promise.all(
+          applications.map(async (app) => {
+            let cvData = cvDetailsCache[app.cvId];
+
+            if (!cvData && app.cvId) {
+              try {
+                const response = await cvAPI.getDetailCv(app.cvId);
+                cvData = response.data.data;
+
+                setCvDetailsCache(prev => ({
+                  ...prev,
+                  [app.cvId]: cvData
+                }));
+              } catch (error) {
+                console.error("Error fetching CV details:", error);
+              }
+            }
+
+            const fullName = cvData?.info?.fullName || app.applicantName || "Chưa có thông tin";
+            const email = cvData?.info?.email || app.email || "Chưa có thông tin";
+
+            return {
+              ...app,
+              applicantName: fullName,
+              email: email,
+              cv: cvData
+            };
+          })
+        );
+
+        setApplicationsWithDetails(updatedApps);
+      } catch (error) {
+        console.error("Error processing applications:", error);
+      }
+    };
+
+    fetchApplicationDetails();
+  }, [applications, cvDetailsCache]);
+
   const handleApproveApplication = async (applyId) => {
     try {
       await applyAPI.approveApplication(applyId);
-      // Refresh applications list
-      const applicationsResponse = await applyAPI.getApplicationsByJob(id);
+      const applicationsResponse = await applyAPI.getJobApplications(id);
       setApplications(applicationsResponse.data.data || []);
       message.success("Đã duyệt đơn ứng tuyển");
     } catch (err) {
@@ -297,23 +457,29 @@ const JobDetail = () => {
   const handleRejectApplication = async (applyId) => {
     try {
       await applyAPI.rejectApplication(applyId);
-      // Refresh applications list
-      const applicationsResponse = await applyAPI.getApplicationsByJob(id);
+      const applicationsResponse = await applyAPI.getJobApplications(id);
       setApplications(applicationsResponse.data.data || []);
       message.success("Đã từ chối đơn ứng tuyển");
     } catch (err) {
       console.error("Error rejecting application:", err);
       message.error("Không thể từ chối đơn ứng tuyển");
     }
-  };
-
-  const fetchUserCVs = async () => {
+  };  const fetchUserCVs = async () => {
     if (!isLoggedIn || !isUser) return;
 
     try {
       setLoadingCVs(true);
-      const response = await cvAPI.getCvs(0, 100); // Lấy tối đa 100 CV
-      setUserCVs(response.data.data.content || []);
+      
+      const response = await cvAPI.getCvs(0, 100);
+      const cvList = response.data.data.content || [];
+      
+      // Look for the default CV in the list
+      const defaultCv = cvList.find(cv => cv.default === true);
+      if (defaultCv) {
+        setSelectedCV(defaultCv.id);
+      }
+      
+      setUserCVs(cvList);
     } catch (error) {
       console.error("Error fetching user CVs:", error);
       toast.error("Không thể tải danh sách CV. Vui lòng thử lại sau.");
@@ -321,24 +487,21 @@ const JobDetail = () => {
       setLoadingCVs(false);
     }
   };
-
   const handleBookmark = () => {
     if (!isLoggedIn) {
-      toast.warning("Vui lòng đăng nhập để lưu công việc này");
+      setShowAuthModal(true);
       return;
     }
 
     setIsBookmarked(!isBookmarked);
-    // TODO: Gọi API lưu/bỏ lưu job
     const message = isBookmarked
       ? "Đã xóa công việc khỏi danh sách đã lưu"
       : "Đã lưu công việc này";
     toast.success(message);
   };
-
   const handleApply = () => {
     if (!isLoggedIn) {
-      toast.warning("Vui lòng đăng nhập để ứng tuyển");
+      setShowAuthModal(true);
       return;
     }
 
@@ -347,21 +510,61 @@ const JobDetail = () => {
       return;
     }
 
-    // Lấy danh sách CV của người dùng
+    if (hasApplied) {
+      toast.info("Bạn đã ứng tuyển vào vị trí này");
+      return;
+    }
+
     fetchUserCVs();
     setShowApplyModal(true);
   };
-
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Đã sao chép liên kết vào clipboard");
-  };
+  }; const handlePreviewCV = async (cv) => {
+    try {
+      const cvId = typeof cv === 'object' ? cv.id : cv;
 
-  const handlePreviewCV = (cv) => {
-    setPreviewCV(cv);
-    setShowPreviewModal(true);
-  };
+      if (!cvId) {
+        message.error("Không tìm thấy thông tin CV");
+        return;
+      }
 
+      setLoadingCVs(true);
+      setShowPreviewModal(true);
+
+      if (cvDetailsCache[cvId]) {
+        console.log("Using cached CV data:", cvDetailsCache[cvId]);
+
+        const transformedData = transformApiDataToFormData(cvDetailsCache[cvId]);
+        console.log("Transformed CV data from cache:", transformedData);
+
+        setPreviewCV(transformedData);
+        setLoadingCVs(false);
+        return;
+      }
+
+      const response = await cvAPI.getDetailCv(cvId);
+      console.log("CV Data from API:", response.data.data);
+
+      const cvData = response.data.data ? { ...response.data.data } : {};
+
+      setCvDetailsCache(prev => ({
+        ...prev,
+        [cvId]: cvData
+      }));
+
+      const transformedData = transformApiDataToFormData(cvData);
+      console.log("Transformed CV data from API:", transformedData);
+
+      setPreviewCV(transformedData);
+    } catch (error) {
+      console.error("Error fetching CV details:", error);
+      message.error("Không thể tải thông tin CV");
+    } finally {
+      setLoadingCVs(false);
+    }
+  };
   const handleSubmitApplication = async () => {
     if (!selectedCV) {
       toast.warning("Vui lòng chọn CV để ứng tuyển");
@@ -370,7 +573,6 @@ const JobDetail = () => {
 
     try {
       setApplyLoading(true);
-      // Đảm bảo có userId từ userData
       const userId = userData?.id;
 
       if (!userId) {
@@ -380,8 +582,18 @@ const JobDetail = () => {
         return;
       }
 
-      // Gọi API ứng tuyển với đầy đủ các tham số: userId, jobId, cvId
       await applyAPI.applyJob(userId, job.id, selectedCV);
+
+      setHasApplied(true);
+      
+      const newApplication = { 
+        userId, 
+        jobId: job.id, 
+        cvId: selectedCV,
+        status: "PENDING",
+        appliedAt: new Date().toISOString()
+      };
+      setUserApplications(prev => [...prev, newApplication]);
 
       toast.success("Ứng tuyển thành công!");
       setShowApplyModal(false);
@@ -430,66 +642,79 @@ const JobDetail = () => {
 
   const descriptionSections = parseDescription(job.description);
 
-  const columns = [
-    {
-      title: "Tên ứng viên",
-      dataIndex: "applicantName",
-      key: "applicantName",
+  const columns = [{
+    title: "Tên ứng viên",
+    dataIndex: "applicantName",
+    key: "applicantName",
+    render: (text) => <span className="font-medium">{text}</span>,
+  },
+  {
+    title: "Email",
+    dataIndex: "email",
+    key: "email",
+  },
+  {
+    title: "Trạng thái",
+    dataIndex: "status",
+    key: "status", render: (status) => {
+      let color = "default";
+      let text = "Đang chờ";
+
+      if (status === "APPROVED") {
+        color = "green";
+        text = "Đã duyệt";
+      } else if (status === "REJECTED") {
+        color = "red";
+        text = "Đã từ chối";
+      } else if (status === "PENDING") {
+        color = "blue";
+        text = "Đang chờ duyệt";
+      }
+
+      return <Badge status={color} text={text} />;
     },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => {
-        let color = "default";
-        let text = "Đang chờ";
-        if (status === "APPROVED") {
-          color = "green";
-          text = "Đã duyệt";
-        } else if (status === "REJECTED") {
-          color = "red";
-          text = "Đã từ chối";
-        }
-        return <Badge status={color} text={text} />;
-      },
-    },
-    {
-      title: "Ngày ứng tuyển",
-      dataIndex: "appliedAt",
-      key: "appliedAt",
-      render: (appliedAt) => formatDate(appliedAt),
-    },
-    {
-      title: "Hành động",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          <Tooltip title="Xem CV">
-            <Button
-              icon={<Eye size={16} />}
-              onClick={() => handlePreviewCV(record.cv)}
-            />
-          </Tooltip>
-          <Tooltip title="Duyệt">
-            <Button
-              icon={<CheckCircle size={16} />}
-              onClick={() => handleApproveApplication(record.id)}
-            />
-          </Tooltip>
-          <Tooltip title="Từ chối">
-            <Button
-              icon={<XCircle size={16} />}
-              onClick={() => handleRejectApplication(record.id)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
+  },
+  {
+    title: "Ngày ứng tuyển",
+    dataIndex: "appliedAt",
+    key: "appliedAt",
+    render: (appliedAt) => formatDate(appliedAt),
+  },
+  {
+    title: "Hành động",
+    key: "action", render: (_, record) => (
+      <Space size="small">
+        <Tooltip title="Xem CV">
+          <Button
+            type="primary"
+            icon={<Eye size={16} />}
+            onClick={() => handlePreviewCV(record.cv)}
+            className="bg-blue-500"
+          />
+        </Tooltip>
+        {record.status === "PENDING" && (
+          <>
+            <Tooltip title="Duyệt">
+              <Button
+                type="primary"
+                icon={<CheckCircle size={16} />}
+                onClick={() => handleApproveApplication(record.id)}
+                className="bg-green-500"
+              />
+            </Tooltip>
+            <Tooltip title="Từ chối">
+              <Button
+                type="primary"
+                danger
+                icon={<XCircle size={16} />}
+                onClick={() => handleRejectApplication(record.id)}
+              />
+            </Tooltip>
+          </>
+        )}
+      </Space>
+    ),
+  },
   ];
 
   return (
@@ -573,17 +798,19 @@ const JobDetail = () => {
                     </span>
                   </div>
                 )}
-              </div>
-
-              <div className={styles.actionsBar}>
+              </div>              <div className={styles.actionsBar}>
                 {isLoggedIn && isUser && (
                   <Button
-                    type="primary"
+                    type={hasApplied ? "default" : "primary"}
                     size="large"
                     onClick={handleApply}
-                    className="bg-primaryRed hover:bg-primaryRed/80"
+                    className={hasApplied 
+                      ? "bg-green-100 text-green-600 border-green-300 hover:bg-green-200"
+                      : "bg-primaryRed hover:bg-primaryRed/80"}
+                    icon={hasApplied ? <CheckCircle size={16} /> : null}
+                    disabled={loadingUserApplications}
                   >
-                    Ứng tuyển ngay
+                    {hasApplied ? "Đã ứng tuyển" : "Ứng tuyển ngay"}
                   </Button>
                 )}
                 <Button
@@ -600,9 +827,8 @@ const JobDetail = () => {
             </div>
 
             <button
-              className={`${styles.bookmark} ${
-                isBookmarked ? styles.bookmarked : ""
-              }`}
+              className={`${styles.bookmark} ${isBookmarked ? styles.bookmarked : ""
+                }`}
               onClick={handleBookmark}
               aria-label={
                 isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"
@@ -626,7 +852,7 @@ const JobDetail = () => {
                       {section.title}
                     </div>
                   </Title>
-                  
+
                   {section.key === 'requirements' ? (
                     <div className={styles.requirementsList}>
                       {section.content.split('\n').filter(line => line.trim()).map((item, i) => (
@@ -665,7 +891,7 @@ const JobDetail = () => {
                     "Không có mô tả chi tiết cho công việc này."}
                 </Paragraph>
               </div>
-            )}{/* Hiển thị skillNames dưới dạng list với thiết kế mới */}
+            )}
             <div className={styles.skillsSection}>
               <Title level={4} className={styles.sectionTitle}>
                 <div className={styles.sectionTitleWithIcon}>
@@ -673,7 +899,7 @@ const JobDetail = () => {
                   Kỹ năng yêu cầu
                 </div>
               </Title>
-              
+
               {job.skillNames && job.skillNames.length > 0 ? (
                 <div className={styles.skillTagsContainer}>
                   {job.skillNames.map((skillName, index) => (
@@ -701,19 +927,32 @@ const JobDetail = () => {
                 </span>
               </div>
             )}
-          </div>
-
-          {isHR && (
+          </div>          {isHR && (
             <div className={styles.applicationsSection}>
               <Title level={4} className={styles.sectionTitle}>
+                <FileText size={20} />
                 Danh sách đơn ứng tuyển
               </Title>
-              <Table
-                columns={columns}
-                dataSource={applications}
-                rowKey="id"
-                pagination={false}
-              />
+              {loadingApplications ? (
+                <div className="flex justify-center py-4">
+                  <Spin size="large" tip="Đang tải..." />
+                </div>
+              ) : applicationsWithDetails.length > 0 ? (
+                <Table
+                  columns={columns}
+                  dataSource={applicationsWithDetails}
+                  rowKey="id"
+                  pagination={{
+                    pageSize: 10,
+                    showTotal: (total) => `Tổng cộng ${total} đơn ứng tuyển`
+                  }}
+                />
+              ) : (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="Không có đơn ứng tuyển nào cho vị trí này"
+                />
+              )}
             </div>
           )}
         </div>
@@ -773,15 +1012,26 @@ const JobDetail = () => {
             onChange={(e) => setSelectedCV(e.target.value)}
             value={selectedCV}
             className="w-full"
-          >
-            <List
+          >            <List
               dataSource={userCVs}
               renderItem={(item) => (
-                <List.Item className="border p-4 rounded-lg mb-4 hover:bg-gray-50 transition-colors">
+                <List.Item 
+                  className={`border p-4 rounded-lg mb-4 hover:bg-gray-50 transition-colors ${item.default ? 'bg-orange-50' : ''}`}
+                >
                   <div className="flex items-center w-full">
                     <Radio value={item.id} className="mr-4" />
                     <div className="flex-grow">
-                      <div className="font-medium text-base">{item.cvName}</div>
+                      <div className="font-medium text-base flex items-center gap-1">
+                        {item.default && (
+                          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                        )}
+                        {item.cvName}
+                        {item.default && (
+                          <span className="ml-2 text-xs text-orange-600 font-medium border border-orange-300 px-2 py-0.5 rounded-full">
+                            Mặc định
+                          </span>
+                        )}
+                      </div>
                       <div className="text-gray-500 text-sm">
                         Cập nhật: {formatDate(item.updatedAt || item.createdAt)}
                       </div>
@@ -804,7 +1054,6 @@ const JobDetail = () => {
           </Radio.Group>
         )}
       </Modal>
-
       {/* Modal xem trước CV */}
       <Modal
         open={showPreviewModal}
@@ -812,35 +1061,48 @@ const JobDetail = () => {
         style={{ top: 0 }}
         height={"100vh"}
         width={800}
-        footer={[
-          <></>
-        ]}
+        footer={[<></>]}
         destroyOnClose
       >
-        {previewCV ? (
-          <div className="p-4 h-[85vh] overflow-y-auto border rounded">
-            <h2 className="text-xl font-bold mb-4">{previewCV.cvName}</h2>
-            <PDFViewer width="100%" height="90%" showToolbar>
-              {(() => {
-                switch (previewCV.templateId) {
-                  case 1:
-                    return <TemplateCV1 data={previewCV} />;
-                  case 2:
-                    return <TemplateCV2 data={previewCV} />;
-                  case 3:
-                    return <TemplateCV3 data={sampleDataCV4} />;
-                  case 4:
-                    return <TemplateCV4 data={sampleDataCV4} />;
-                  default:
-                    return <TemplateCV1 data={previewCV} />;
-                }
-              })()}
-            </PDFViewer>
-          </div>
-        ) : (
+        {loadingCVs ? (
+          <div className="flex justify-center py-8">
+            <Spin size="large" tip="Đang tải CV..." />
+          </div>) : previewCV ? (
+            <div className="p-4 h-[85vh] overflow-y-auto border rounded">
+              <h2 className="text-xl font-bold mb-4">{previewCV.name}</h2>
+              <PDFViewer width="100%" height="90%" showToolbar>
+                {(() => {
+                  try {
+                    switch (previewCV.templateId) {
+                      case 1:
+                        return <TemplateCV1 data={previewCV} />;
+                      case 2:
+                        return <TemplateCV2 data={previewCV} />;
+                      case 3:
+                        return <TemplateCV3 data={previewCV} />;
+                      case 4:
+                        return <TemplateCV4 data={previewCV} />;
+                      default:
+                        return <TemplateCV1 data={previewCV} />;
+                    }
+                  } catch (error) {
+                    console.error("Error rendering CV template:", error);
+                    return <div>Có lỗi khi hiển thị CV. Vui lòng thử lại.</div>;
+                  }
+                })()}
+              </PDFViewer>
+            </div>) : (
           <div className="text-center py-8">Không có thông tin CV</div>
         )}
       </Modal>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        open={showAuthModal} 
+        onOpenChange={setShowAuthModal}
+        title="Yêu cầu đăng nhập" 
+        description="Bạn cần đăng nhập để thực hiện chức năng này." 
+      />
     </div>
   );
 };
